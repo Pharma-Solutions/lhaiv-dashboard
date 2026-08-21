@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LighthouseAI Verified — ATP Registry Data Discovery</title>
+<style>
+  :root{
+    color-scheme: light;
+    --plane:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
+    --grid:#e1e0d9; --baseline:#c3c2b7; --border:rgba(11,11,11,0.10);
+    --blue:#2a78d6; --blue-d:#184f95; --blue-m:#5598e7; --blue-l:#86b6ef;
+    --good:#0ca30c; --warn:#eda100; --gray:#a8a7a0; --gray-l:#cfcec7;
+    --shadow:0 1px 2px rgba(11,11,11,.04),0 4px 16px rgba(11,11,11,.05);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --plane:#0d0d0d; --surface:#1a1a19; --ink:#fff; --ink2:#c3c2b7; --muted:#898781;
+      --grid:#2c2c2a; --baseline:#383835; --border:rgba(255,255,255,0.10);
+      --blue:#3987e5; --blue-d:#1c5cab; --blue-m:#5598e7; --blue-l:#6da7ec;
+      --good:#0ca30c; --warn:#c98500; --gray:#6f6e69; --gray-l:#4a4a47;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --plane:#0d0d0d; --surface:#1a1a19; --ink:#fff; --ink2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --baseline:#383835; --border:rgba(255,255,255,0.10);
+    --blue:#3987e5; --blue-d:#1c5cab; --blue-m:#5598e7; --blue-l:#6da7ec;
+    --good:#0ca30c; --warn:#c98500; --gray:#6f6e69; --gray-l:#4a4a47;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.4);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--plane);color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5;
+    -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1160px;margin:0 auto;padding:28px 22px 64px;}
+  header.top{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap;margin-bottom:6px;}
+  .brandrow{display:flex;align-items:center;gap:11px;}
+  .beacon{width:30px;height:30px;border-radius:8px;flex:none;
+    background:linear-gradient(150deg,var(--blue) 0%,var(--blue-d) 100%);
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;}
+  h1{font-size:19px;margin:0;letter-spacing:-.01em;font-weight:650;}
+  .sub{color:var(--ink2);font-size:13px;margin-top:2px;}
+  .asof{color:var(--muted);font-size:12px;text-align:right;}
+  .asof b{color:var(--ink2);font-weight:600;}
+  .toggle{margin-top:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink2);
+    border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer;}
+  .toggle:hover{color:var(--ink);}
+  .lede{color:var(--ink2);font-size:13.5px;max-width:860px;margin:14px 0 22px;
+    background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 15px;box-shadow:var(--shadow);}
+  .lede b{color:var(--ink);}
+  h2{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);
+    margin:30px 0 12px;font-weight:650;}
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  @media(max-width:820px){.tiles{grid-template-columns:repeat(2,1fr)}}
+  .tile{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:15px 16px;box-shadow:var(--shadow);}
+  .tile .k{font-size:29px;font-weight:680;letter-spacing:-.02em;line-height:1.05;}
+  .tile .k small{font-size:15px;color:var(--muted);font-weight:600;margin-left:3px;}
+  .tile .l{font-size:12.5px;color:var(--ink2);margin-top:5px;}
+  .tile .n{font-size:11.5px;color:var(--muted);margin-top:3px;}
+  .tile.accent .k{color:var(--blue);}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media(max-width:820px){.grid2{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 18px 16px;box-shadow:var(--shadow);}
+  .card h3{margin:0 0 3px;font-size:14.5px;font-weight:640;}
+  .card .cap{color:var(--muted);font-size:12px;margin:0 0 14px;}
+  .bar{display:grid;grid-template-columns:150px 1fr 42px;align-items:center;gap:10px;margin:9px 0;}
+  .bar .name{font-size:12.5px;color:var(--ink2);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bar .track{background:var(--grid);border-radius:5px;height:15px;overflow:hidden;}
+  .bar .fill{height:100%;border-radius:5px;transition:width .2s;}
+  .bar .val{font-size:12.5px;font-weight:640;font-variant-numeric:tabular-nums;text-align:right;}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:14px;font-size:11.5px;color:var(--ink2);}
+  .legend span{display:inline-flex;align-items:center;gap:5px;}
+  .sw{width:10px;height:10px;border-radius:3px;display:inline-block;}
+  .pipe{display:flex;height:34px;border-radius:8px;overflow:hidden;border:1px solid var(--border);}
+  .pipe div{display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:640;min-width:26px;}
+  .decisions{display:flex;flex-direction:column;gap:9px;}
+  .dec{display:flex;align-items:center;gap:12px;padding:11px 13px;border:1px solid var(--border);border-radius:9px;background:var(--plane);}
+  .dec .cnt{font-size:20px;font-weight:700;color:var(--blue);min-width:34px;text-align:center;font-variant-numeric:tabular-nums;}
+  .dec .txt{font-size:13px;color:var(--ink);}
+  .dec .txt small{display:block;color:var(--muted);font-size:11.5px;margin-top:1px;}
+  .controls{display:flex;gap:10px;align-items:center;margin:0 0 10px;flex-wrap:wrap;}
+  .controls input{flex:1;min-width:200px;border:1px solid var(--border);background:var(--surface);color:var(--ink);
+    border-radius:8px;padding:8px 11px;font-size:13px;}
+  .controls .count{font-size:12px;color:var(--muted);}
+  .tblwrap{overflow:auto;max-height:600px;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);}
+  table{border-collapse:collapse;width:100%;font-size:12.5px;background:var(--surface);}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--grid);white-space:nowrap;}
+  th{position:sticky;top:0;background:var(--surface);color:var(--muted);font-weight:600;font-size:11px;
+    text-transform:uppercase;letter-spacing:.04em;cursor:pointer;user-select:none;}
+  th:hover{color:var(--ink);}
+  td.wrap{white-space:normal;min-width:230px;color:var(--ink2);}
+  tr:last-child td{border-bottom:none;}
+  .pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;}
+  .st-del{background:rgba(12,163,12,.14);color:var(--good);}
+  .st-full{background:rgba(42,120,214,.16);color:var(--blue);}
+  .st-part{background:rgba(85,152,231,.16);color:var(--blue-m);}
+  .st-path{background:rgba(237,161,0,.15);color:var(--warn);}
+  .st-out{background:rgba(137,135,129,.16);color:var(--muted);}
+  .paidY{color:var(--warn);font-weight:600;}
+  .prioH{color:var(--blue);font-weight:600;}
+  footer{margin-top:34px;color:var(--muted);font-size:11.5px;line-height:1.7;border-top:1px solid var(--border);padding-top:16px;}
+  footer b{color:var(--ink2);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="brandrow"><div class="beacon">V</div>
+        <div><h1>LighthouseAI Verified &mdash; ATP Registry Data Discovery</h1>
+        <div class="sub">Licensing-data acquisition status across U.S. pharmacy & related agencies</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="asof">Source verified <b>__VERIFIED__</b><br>Dashboard built <b>__BUILD__</b></div>
+      <button class="toggle" id="themeBtn">Toggle theme</button>
+    </div>
+  </header>
+
+  <div class="lede" id="lede"></div>
+
+  <h2>Where the effort stands</h2>
+  <div class="tiles" id="tiles"></div>
+
+  <h2>Acquisition pipeline</h2>
+  <div class="card">
+    <h3>From cataloged to data-in-hand</h3>
+    <p class="cap">Every in-scope agency moves left&rarr;right: a confirmed way to get the data, then delivered, then validated. Out-of-scope agencies (no pharmacy-relevant match) are excluded from the denominator.</p>
+    <div class="pipe" id="pipe"></div>
+    <div class="legend" id="pipeLegend"></div>
+  </div>
+
+  <div class="grid2" style="margin-top:18px">
+    <div class="card">
+      <h3>Coverage status</h3>
+      <p class="cap">The real progress signal (the sheet's "Discovery Status" column is stale).</p>
+      <div id="coverageBars"></div>
+    </div>
+    <div class="card">
+      <h3>How we acquire the data</h3>
+      <p class="cap">Determines automatability and cost. Public + API is directly automatable; requests, paid purchase and account approval are gated.</p>
+      <div id="accessBars"></div>
+    </div>
+  </div>
+
+  <div class="grid2" style="margin-top:18px">
+    <div class="card">
+      <h3>Cost exposure</h3>
+      <p class="cap">Among in-scope agencies. Most data is free; a minority carry fees.</p>
+      <div id="costBars"></div>
+      <div class="legend" style="margin-top:16px"><span id="costNote" style="color:var(--ink2)"></span></div>
+    </div>
+    <div class="card">
+      <h3>Decisions awaiting leadership</h3>
+      <p class="cap">Pending calls that unblock acquisition, grouped by type.</p>
+      <div class="decisions" id="decisions"></div>
+    </div>
+  </div>
+
+  <h2>Agency detail</h2>
+  <div class="controls">
+    <input id="search" placeholder="Filter by state, agency, status, access, decision&hellip;">
+    <span class="count" id="tblCount"></span>
+  </div>
+  <div class="tblwrap">
+    <table id="tbl">
+      <thead><tr>
+        <th data-k="state">State</th><th data-k="agency">Agency</th>
+        <th data-k="priority">Priority</th><th data-k="coverage">Coverage status</th>
+        <th data-k="access">Access</th><th data-k="paid">Paid?</th>
+        <th data-k="fee">Known fee</th><th data-k="decision">Decision needed</th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>
+const DATA = __PAYLOAD__;
+const R = DATA.records, META = DATA.meta, COST = DATA.cost;
+const OUT = new Set(["No match","Excluded"]);
+const inScope = R.filter(r=>!OUT.has(r.coverage));
+const N = inScope.length;
+
+// ---- aggregates ----
+function countBy(arr,key){const m={};arr.forEach(r=>{const v=r[key]||"(blank)";m[v]=(m[v]||0)+1});return m;}
+const cov = countBy(R,"coverage");
+const acquired = (cov["Delivered and verified"]||0)+(cov["Validated full coverage"]||0)+(cov["Validated partial coverage"]||0);
+const path = cov["Confirmed acquisition path"]||0;
+const excluded = cov["Excluded"]||0;
+const nomatch = cov["No match"]||0;
+const highP = R.filter(r=>r.priority==="High").length;
+
+// ---- lede ----
+document.getElementById("lede").innerHTML =
+ `<b>${META.agencies}</b> licensing agencies across <b>${META.jurisdictions}</b> jurisdictions have been cataloged. `+
+ `Of the <b>${N}</b> in scope, <b>${acquired}</b> (<b>${Math.round(acquired/N*100)}%</b>) have data acquired or validated; the remaining <b>${path}</b> all have a confirmed acquisition path, so there are <b>no dead ends</b> &mdash; every in-scope agency has at least a known route to the data. `+
+ `Nearly all of it is free; only <b>${COST.paidAgencies}</b> agencies carry a fee, most nominal. `+
+ `The gating item now is not discovery &mdash; it is the <b>${Object.values(decMapPreview()).reduce((a,b)=>a+b,0)}</b> inclusion, fee and records-request approvals awaiting leadership, shown below.`;
+function decMapPreview(){const m={};inScope.forEach(r=>{if(r.decision&&!/no action/i.test(r.decision))m[r.decision]=1+(m[r.decision]||0)});return m;}
+
+// ---- tiles ----
+const tiles=[
+ {k:META.jurisdictions,l:"Jurisdictions covered",n:"states, DC & territories",accent:true},
+ {k:META.agencies,l:"Agencies cataloged",n:`${N} in scope · ${nomatch} unmatched`},
+ {k:acquired,sub:`/${N}`,l:"Data acquired or validated",n:`${Math.round(acquired/N*100)}% of in-scope`,accent:true},
+ {k:path,l:"Acquisition path confirmed",n:"known route, no dead ends"},
+ {k:COST.paidAgencies,l:"Agencies with a fee",n:`${N-COST.paidAgencies} free; fees mostly nominal`},
+ {k:highP,l:"High-priority agencies",n:`${META.agencies-highP} medium`},
+];
+document.getElementById("tiles").innerHTML = tiles.map(t=>
+ `<div class="tile ${t.accent?'accent':''}"><div class="k">${t.k}${t.sub?`<small>${t.sub}</small>`:''}</div>`+
+ `<div class="l">${t.l}</div><div class="n">${t.n}</div></div>`).join("");
+
+// ---- pipeline ----
+const pipeSegs=[
+ {n:"Acquired / validated",v:acquired,c:"var(--blue-d)"},
+ {n:"Path confirmed, not yet pulled",v:path,c:"var(--warn)"},
+];
+const pipeTot=acquired+path;
+document.getElementById("pipe").innerHTML=pipeSegs.map(s=>
+ `<div title="${s.n}: ${s.v}" style="width:${s.v/pipeTot*100}%;background:${s.c}">${s.v}</div>`).join("");
+document.getElementById("pipeLegend").innerHTML=pipeSegs.map(s=>
+ `<span><i class="sw" style="background:${s.c}"></i>${s.n} &middot; ${s.v}</span>`).join("")+
+ `<span style="color:var(--muted)">In-scope: ${N} agencies &nbsp;·&nbsp; out of scope: ${nomatch} unmatched + ${excluded} excluded</span>`;
+
+// ---- bar helper ----
+function bars(el,rows,max,color){
+ document.getElementById(el).innerHTML=rows.map(r=>
+  `<div class="bar"><div class="name" title="${r.n}">${r.n}</div>`+
+  `<div class="track"><div class="fill" style="width:${r.v/max*100}%;background:${r.c||color}"></div></div>`+
+  `<div class="val">${r.v}</div></div>`).join("");
+}
+const covColors={"Delivered and verified":"var(--good)","Validated full coverage":"var(--blue)",
+ "Validated partial coverage":"var(--blue-m)","Confirmed acquisition path":"var(--warn)",
+ "Excluded":"var(--gray)","No match":"var(--gray-l)"};
+const covOrder=["Delivered and verified","Validated full coverage","Validated partial coverage","Confirmed acquisition path","Excluded","No match"];
+bars("coverageBars",covOrder.filter(k=>cov[k]).map(k=>({n:k,v:cov[k],c:covColors[k]})),Math.max(...Object.values(cov)));
+
+const acc=countBy(R,"access");delete acc["No match"];delete acc["Not applicable"];
+const accRows=Object.entries(acc).sort((a,b)=>b[1]-a[1]).map(([n,v])=>({n,v}));
+bars("accessBars",accRows,Math.max(...accRows.map(r=>r.v)),"var(--blue)");
+
+// ---- cost ----
+const paidC=countBy(inScope,"paid");
+const costRows=[["Free / no cost",paidC["No"]||0],["Paid",paidC["Yes"]||0],["Optional fee",paidC["Optional"]||0],["Unknown / pending",paidC["Unknown"]||0]]
+ .map(([n,v])=>({n,v}));
+bars("costBars",costRows,Math.max(...costRows.map(r=>r.v)),"var(--blue)");
+document.getElementById("costNote").innerHTML=
+ `Known flat fees total ≈ <b>$${COST.oneTimeFloor.toLocaleString()}</b> across ${COST.withStatedFee} agencies (a floor). Several fees are priced <b>per list / per record / per roster</b>, so recurring cost depends on pull cadence and is not yet fully modeled.`;
+
+// ---- decisions ----
+const decMap={};inScope.forEach(r=>{const d=r.decision;if(!d)return;
+ let bucket="Other";
+ if(/state fee/i.test(d))bucket="Approve inclusion + state fee";
+ else if(/records request/i.test(d))bucket="Authorize official records request";
+ else if(/confirm inclusion/i.test(d))bucket="Confirm inclusion";
+ else if(/accept validated population/i.test(d))bucket="Accept population or request expansion";
+ else if(/no action/i.test(d))bucket="No action needed";
+ decMap[bucket]=(decMap[bucket]||0)+1;});
+const decEx={"Approve inclusion + state fee":"Green-light paid agencies so ordering can begin",
+ "Authorize official records request":"Approve the formal request to the agency",
+ "Confirm inclusion":"Confirm the agency belongs in the registry",
+ "Accept population or request expansion":"Accept the validated set or ask for more",
+ "No action needed":"Scope unchanged"};
+const decOrder=["Approve inclusion + state fee","Authorize official records request","Confirm inclusion","Accept population or request expansion","No action needed","Other"];
+document.getElementById("decisions").innerHTML=decOrder.filter(k=>decMap[k]).map(k=>
+ `<div class="dec"><div class="cnt">${decMap[k]}</div><div class="txt">${k}<small>${decEx[k]||""}</small></div></div>`).join("");
+
+// ---- table ----
+const covPill={"Delivered and verified":"st-del","Validated full coverage":"st-full",
+ "Validated partial coverage":"st-part","Confirmed acquisition path":"st-path",
+ "Excluded":"st-out","No match":"st-out"};
+let sortK="state",sortDir=1;
+function render(){
+ const q=document.getElementById("search").value.toLowerCase();
+ let rows=R.filter(r=>!q||[r.state,r.agency,r.coverage,r.access,r.paid,r.fee,r.decision,r.priority].join(" ").toLowerCase().includes(q));
+ rows.sort((a,b)=>{const x=(a[sortK]||"").toString(),y=(b[sortK]||"").toString();return x<y?-sortDir:x>y?sortDir:0;});
+ document.getElementById("tbody").innerHTML=rows.map(r=>
+  `<tr><td><b>${r.state}</b></td><td>${r.agency||"&mdash;"}</td>`+
+  `<td class="${r.priority==='High'?'prioH':''}">${r.priority||""}</td>`+
+  `<td><span class="pill ${covPill[r.coverage]||'st-out'}">${r.coverage||"&mdash;"}</span></td>`+
+  `<td>${r.access||"&mdash;"}</td><td class="${r.paid==='Yes'?'paidY':''}">${r.paid||"&mdash;"}</td>`+
+  `<td class="wrap">${r.fee&&r.fee!=='No agency fee identified'&&r.fee!=='No match'?r.fee:'<span style="color:var(--muted)">&mdash;</span>'}</td>`+
+  `<td class="wrap">${r.decision&&r.decision!=='No match'?r.decision:'<span style="color:var(--muted)">&mdash;</span>'}</td></tr>`).join("");
+ document.getElementById("tblCount").textContent=`${rows.length} of ${R.length} agencies`;
+}
+document.querySelectorAll("th").forEach(th=>th.addEventListener("click",()=>{
+ const k=th.dataset.k;if(k===sortK)sortDir*=-1;else{sortK=k;sortDir=1;}render();}));
+document.getElementById("search").addEventListener("input",render);
+render();
+
+// ---- footer ----
+document.getElementById("foot").innerHTML=
+ `<b>Source:</b> Lighthouse_API_Master_Discovery_Tracker (API Discovery Tracker sheet), compiled by M. Murtuza. `+
+ `<b>Denominator:</b> ${N} in-scope agencies; ${nomatch} agencies returned no pharmacy-relevant match and are excluded from percentages. `+
+ `<b>Coverage status</b> is read from the enriched "Coverage – Licensing Coverage" field, not the stale "Discovery Status" column. `+
+ `<b>Cost</b> figures are a floor: only clearly-stated flat fees are summed; per-list/per-record pricing and pending agency quotes are not modeled. `+
+ `Not yet reflected: weighting by LighthouseAI's current-customer footprint (needs the customer trading-partner list). `+
+ `This is a snapshot; wire the SharePoint source for automatic daily refresh.`;
+
+// ---- theme toggle ----
+document.getElementById("themeBtn").addEventListener("click",()=>{
+ const r=document.documentElement;const cur=r.getAttribute("data-theme");
+ const dark=cur?cur==="dark":matchMedia("(prefers-color-scheme: dark)").matches;
+ r.setAttribute("data-theme",dark?"light":"dark");});
+</script>
+</body>
+</html>

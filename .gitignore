@@ -1,0 +1,8 @@
+.env
+tracker.xlsx
+dist/
+__pycache__/
+*.pyc
+
+.venv/
+*.xlsx

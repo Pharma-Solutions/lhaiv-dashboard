@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LighthouseAI Verified — License Data Tracker</title>
+<style>
+  :root{
+    color-scheme: light;
+    --plane:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
+    --grid:#e1e0d9; --baseline:#c3c2b7; --border:rgba(11,11,11,0.10);
+    --blue:#2a78d6; --blue-d:#184f95; --blue-m:#5598e7; --blue-l:#86b6ef;
+    --good:#0ca30c; --warn:#eda100; --gray:#a8a7a0; --gray-l:#cfcec7;
+    --shadow:0 1px 2px rgba(11,11,11,.04),0 4px 16px rgba(11,11,11,.05);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --plane:#0d0d0d; --surface:#1a1a19; --ink:#fff; --ink2:#c3c2b7; --muted:#898781;
+      --grid:#2c2c2a; --baseline:#383835; --border:rgba(255,255,255,0.10);
+      --blue:#3987e5; --blue-d:#1c5cab; --blue-m:#5598e7; --blue-l:#6da7ec;
+      --good:#0ca30c; --warn:#c98500; --gray:#6f6e69; --gray-l:#4a4a47;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --plane:#0d0d0d; --surface:#1a1a19; --ink:#fff; --ink2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --baseline:#383835; --border:rgba(255,255,255,0.10);
+    --blue:#3987e5; --blue-d:#1c5cab; --blue-m:#5598e7; --blue-l:#6da7ec;
+    --good:#0ca30c; --warn:#c98500; --gray:#6f6e69; --gray-l:#4a4a47;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.4);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--plane);color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5;
+    -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1160px;margin:0 auto;padding:28px 22px 64px;}
+  header.top{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap;margin-bottom:6px;}
+  .brandrow{display:flex;align-items:center;gap:11px;}
+  .beacon{width:30px;height:30px;border-radius:8px;flex:none;
+    background:linear-gradient(150deg,var(--blue) 0%,var(--blue-d) 100%);
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;}
+  h1{font-size:19px;margin:0;letter-spacing:-.01em;font-weight:650;}
+  .sub{color:var(--ink2);font-size:13px;margin-top:2px;}
+  .asof{color:var(--muted);font-size:12px;text-align:right;}
+  .asof b{color:var(--ink2);font-weight:600;}
+  .toggle{margin-top:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink2);
+    border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer;}
+  .toggle:hover{color:var(--ink);}
+  .lede{color:var(--ink2);font-size:13.5px;max-width:860px;margin:14px 0 22px;
+    background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 15px;box-shadow:var(--shadow);}
+  .lede b{color:var(--ink);}
+  h2{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);
+    margin:30px 0 12px;font-weight:650;}
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  @media(max-width:820px){.tiles{grid-template-columns:repeat(2,1fr)}}
+  .tile{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:15px 16px;box-shadow:var(--shadow);}
+  .tile .k{font-size:29px;font-weight:680;letter-spacing:-.02em;line-height:1.05;}
+  .tile .k small{font-size:15px;color:var(--muted);font-weight:600;margin-left:3px;}
+  .tile .l{font-size:12.5px;color:var(--ink2);margin-top:5px;}
+  .tile .n{font-size:11.5px;color:var(--muted);margin-top:3px;}
+  .tile.accent .k{color:var(--blue);}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media(max-width:820px){.grid2{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 18px 16px;box-shadow:var(--shadow);}
+  .card h3{margin:0 0 3px;font-size:14.5px;font-weight:640;}
+  .card .cap{color:var(--muted);font-size:12px;margin:0 0 14px;}
+  .bar{display:grid;grid-template-columns:150px 1fr 42px;align-items:center;gap:10px;margin:9px 0;}
+  .bar .name{font-size:12.5px;color:var(--ink2);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bar .track{background:var(--grid);border-radius:5px;height:15px;overflow:hidden;}
+  .bar .fill{height:100%;border-radius:5px;transition:width .2s;}
+  .bar .val{font-size:12.5px;font-weight:640;font-variant-numeric:tabular-nums;text-align:right;}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:14px;font-size:11.5px;color:var(--ink2);}
+  .legend span{display:inline-flex;align-items:center;gap:5px;}
+  .sw{width:10px;height:10px;border-radius:3px;display:inline-block;}
+  .minih{font-size:12px;font-weight:640;color:var(--ink2);margin:2px 0 10px;}
+  .callout{margin-top:16px;font-size:12.5px;color:var(--ink2);background:var(--plane);
+    border:1px solid var(--border);border-left:3px solid var(--warn);border-radius:8px;padding:11px 13px;}
+  .callout b{color:var(--ink);}
+  .pipe{display:flex;height:34px;border-radius:8px;overflow:hidden;border:1px solid var(--border);}
+  .pipe div{display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:640;min-width:26px;}
+  .decisions{display:flex;flex-direction:column;gap:9px;}
+  .dec{display:flex;align-items:center;gap:12px;padding:11px 13px;border:1px solid var(--border);border-radius:9px;background:var(--plane);}
+  .dec .cnt{font-size:20px;font-weight:700;color:var(--blue);min-width:34px;text-align:center;font-variant-numeric:tabular-nums;}
+  .dec .txt{font-size:13px;color:var(--ink);}
+  .dec .txt small{display:block;color:var(--muted);font-size:11.5px;margin-top:1px;}
+  .controls{display:flex;gap:10px;align-items:center;margin:0 0 10px;flex-wrap:wrap;}
+  .controls input{flex:1;min-width:200px;border:1px solid var(--border);background:var(--surface);color:var(--ink);
+    border-radius:8px;padding:8px 11px;font-size:13px;}
+  .controls .count{font-size:12px;color:var(--muted);}
+  .tblwrap{overflow:auto;max-height:600px;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);}
+  table{border-collapse:collapse;width:100%;font-size:12.5px;background:var(--surface);}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--grid);white-space:nowrap;}
+  th{position:sticky;top:0;background:var(--surface);color:var(--muted);font-weight:600;font-size:11px;
+    text-transform:uppercase;letter-spacing:.04em;cursor:pointer;user-select:none;}
+  th:hover{color:var(--ink);}
+  td.wrap{white-space:normal;min-width:230px;color:var(--ink2);}
+  tr:last-child td{border-bottom:none;}
+  .pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;}
+  .st-del{background:rgba(12,163,12,.14);color:var(--good);}
+  .st-full{background:rgba(42,120,214,.16);color:var(--blue);}
+  .st-part{background:rgba(85,152,231,.16);color:var(--blue-m);}
+  .st-path{background:rgba(237,161,0,.15);color:var(--warn);}
+  .st-out{background:rgba(137,135,129,.16);color:var(--muted);}
+  .paidY{color:var(--warn);font-weight:600;}
+  .prioH{color:var(--blue);font-weight:600;}
+  footer{margin-top:34px;color:var(--muted);font-size:11.5px;line-height:1.7;border-top:1px solid var(--border);padding-top:16px;}
+  footer b{color:var(--ink2);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="brandrow"><div class="beacon">V</div>
+        <div><h1>LighthouseAI Verified &mdash; License Data Tracker</h1>
+        <div class="sub">Availability, cost, and Hermai coverage across licensing agencies</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="asof">Source verified <b>__VERIFIED__</b><br>Dashboard built <b>__BUILD__</b></div>
+      <button class="toggle" id="themeBtn">Toggle theme</button>
+    </div>
+  </header>
+
+  <div class="lede" id="lede"></div>
+
+  <h2>At a glance</h2>
+  <div class="tiles" id="tiles"></div>
+
+  <div class="grid2" style="margin-top:18px">
+    <div class="card">
+      <h3>Data availability</h3>
+      <p class="cap">Is the licensing data publicly available for each agency?</p>
+      <div id="publicBars"></div>
+    </div>
+    <div class="card">
+      <h3>Hermai coverage</h3>
+      <p class="cap">Can Hermai source the agency's data?</p>
+      <div id="hermaiBars"></div>
+    </div>
+  </div>
+
+  <div class="grid2" style="margin-top:18px">
+    <div class="card">
+      <h3>Cost</h3>
+      <p class="cap">Does acquiring the data carry a fee?</p>
+      <div id="costBars"></div>
+      <div class="callout" id="costNote"></div>
+    </div>
+    <div class="card">
+      <h3>How the data is provided</h3>
+      <p class="cap">Acquisition mechanism per agency.</p>
+      <div id="mechBars"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:18px">
+    <h3>Data content</h3>
+    <p class="cap">Which agencies publish status/expiration and disciplinary-action detail.</p>
+    <div class="grid2" style="gap:26px">
+      <div><div class="minih">Includes status / expiration</div><div id="statusBars"></div></div>
+      <div><div class="minih">Includes disciplinary action</div><div id="discBars"></div></div>
+    </div>
+  </div>
+
+  <h2>Agency detail</h2>
+  <div class="controls">
+    <input id="search" placeholder="Filter by state, agency, outcome, mechanism&hellip;">
+    <span class="count" id="tblCount"></span>
+  </div>
+  <div class="tblwrap">
+    <table id="tbl">
+      <thead><tr>
+        <th data-k="state">State</th><th data-k="agency">Agency</th>
+        <th data-k="public">Public?</th><th data-k="mechanism">Provided how</th>
+        <th data-k="cost">Cost?</th><th data-k="fee">Fee</th>
+        <th data-k="hermai">Hermai?</th><th data-k="inclStatus">Status</th>
+        <th data-k="inclDiscipline">Discipline</th><th data-k="outcome">Outcome</th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>
+const DATA = __PAYLOAD__;
+const R = DATA.records, META = DATA.meta;
+const yn = v => { v=(v||"").trim().toLowerCase();
+  if(["y","yes","true"].includes(v)) return "Yes";
+  if(["n","no","false"].includes(v)) return "No";
+  return v ? v : "(blank)"; };
+function countBy(arr,key,norm){const m={};arr.forEach(r=>{let v=(r[key]||"").trim()||"(blank)";if(norm)v=norm(r[key]);m[v]=(m[v]||0)+1});return m;}
+function bars(el,rows,color){
+  const max=Math.max(1,...rows.map(r=>r.v));
+  document.getElementById(el).innerHTML = rows.length ? rows.map(r=>
+    `<div class="bar"><div class="name" title="${r.n}">${r.n}</div>`+
+    `<div class="track"><div class="fill" style="width:${r.v/max*100}%;background:${r.c||color}"></div></div>`+
+    `<div class="val">${r.v}</div></div>`).join("") : `<div class="cap">No data yet.</div>`;
+}
+function ynRows(map){ // fixed order Yes / No / blank, with status colors
+  const order=[["Yes","var(--good)"],["No","var(--gray)"],["(blank)","var(--gray-l)"]];
+  return order.filter(([k])=>map[k]).map(([k,c])=>({n:k,v:map[k],c}));
+}
+
+const N = R.length;
+const states = new Set(R.map(r=>r.state).filter(Boolean)).size;
+const pub = countBy(R,"public",yn);
+const cost = countBy(R,"cost",yn);
+const herm = countBy(R,"hermai",yn);
+const populated = R.filter(r=>[r.public,r.cost,r.hermai,r.mechanism,r.outcome].some(x=>(x||"").trim())).length;
+
+document.getElementById("lede").innerHTML =
+  (populated < N || N<=1
+    ? `<b>Template preview.</b> ${populated} of ${N} agency ${N===1?"row is":"rows are"} populated so far &mdash; charts fill in as the tracker is completed. `
+    : "") +
+  `Tracking <b>${N}</b> agencies across <b>${states}</b> ${states===1?"jurisdiction":"jurisdictions"}. `+
+  `Publicly available: <b>${pub["Yes"]||0}</b> &middot; on Hermai: <b>${herm["Yes"]||0}</b> &middot; carry a fee: <b>${cost["Yes"]||0}</b>.`;
+
+const tiles=[
+  {k:states,l:"Jurisdictions",n:"distinct states",accent:true},
+  {k:N,l:"Agencies tracked",n:`${populated} populated`},
+  {k:pub["Yes"]||0,l:"Publicly available",n:`${pub["No"]||0} not public`,accent:true},
+  {k:cost["Yes"]||0,l:"Carry a fee",n:`${cost["No"]||0} free`},
+  {k:herm["Yes"]||0,l:"On Hermai",n:`${herm["No"]||0} not on Hermai`},
+];
+document.getElementById("tiles").innerHTML = tiles.map(t=>
+  `<div class="tile ${t.accent?'accent':''}"><div class="k">${t.k}</div>`+
+  `<div class="l">${t.l}</div><div class="n">${t.n}</div></div>`).join("");
+
+bars("publicBars", ynRows(pub));
+bars("hermaiBars", ynRows(herm));
+bars("costBars", ynRows(cost));
+bars("statusBars", ynRows(countBy(R,"inclStatus",yn)));
+bars("discBars", ynRows(countBy(R,"inclDiscipline",yn)));
+
+const mech = countBy(R,"mechanism");
+const mechRows = Object.entries(mech).filter(([k])=>k!=="(blank)").sort((a,b)=>b[1]-a[1]).map(([n,v])=>({n,v}));
+bars("mechBars", mechRows, "var(--blue)");
+
+const feeRows = R.filter(r=>(r.fee||"").toString().trim());
+document.getElementById("costNote").innerHTML =
+  `<b>${cost["Yes"]||0}</b> agencies carry a fee; <b>${feeRows.length}</b> have a fee amount recorded. Recurring cost depends on pull cadence.`;
+
+// table
+let sortK="state",sortDir=1;
+function render(){
+  const q=document.getElementById("search").value.toLowerCase();
+  let rows=R.filter(r=>!q||[r.state,r.agency,r.mechanism,r.outcome,r.public,r.cost,r.hermai].join(" ").toLowerCase().includes(q));
+  rows.sort((a,b)=>{const x=(a[sortK]||"").toString(),y=(b[sortK]||"").toString();return x<y?-sortDir:x>y?sortDir:0;});
+  const cell=v=>v&&v.toString().trim()?v:'<span style="color:var(--muted)">&mdash;</span>';
+  document.getElementById("tbody").innerHTML=rows.map(r=>
+    `<tr><td><b>${cell(r.state)}</b></td><td>${cell(r.agency)}</td>`+
+    `<td>${cell(yn(r.public))}</td><td>${cell(r.mechanism)}</td>`+
+    `<td class="${yn(r.cost)==='Yes'?'paidY':''}">${cell(yn(r.cost))}</td><td class="wrap">${cell(r.fee)}</td>`+
+    `<td>${cell(yn(r.hermai))}</td><td>${cell(yn(r.inclStatus))}</td>`+
+    `<td>${cell(yn(r.inclDiscipline))}</td><td class="wrap">${cell(r.outcome)}</td></tr>`).join("");
+  document.getElementById("tblCount").textContent=`${rows.length} of ${R.length} agencies`;
+}
+document.querySelectorAll("th").forEach(th=>th.addEventListener("click",()=>{
+  const k=th.dataset.k;if(k===sortK)sortDir*=-1;else{sortK=k;sortDir=1;}render();}));
+document.getElementById("search").addEventListener("input",render);
+render();
+
+document.getElementById("foot").innerHTML=
+  `<b>Source:</b> License Data Tracker (simplified schema). <b>Schema:</b> ${META.schema}. `+
+  `Y/N fields are normalized (Yes/No/blank). "Outcome" is shown verbatim pending a defined value set. `+
+  `Layout will be tuned to real distributions once the tracker is fully populated.`;
+
+document.getElementById("themeBtn").addEventListener("click",()=>{
+  const r=document.documentElement;const cur=r.getAttribute("data-theme");
+  const dark=cur?cur==="dark":matchMedia("(prefers-color-scheme: dark)").matches;
+  r.setAttribute("data-theme",dark?"light":"dark");});
+</script>
+</body>
+</html>
