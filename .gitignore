@@ -1,11 +1,24 @@
+﻿# Secrets / local env
 .env
+.venv/
+
+# Data workbooks (tracker is fetched at runtime)
 tracker.xlsx
+*.xlsx
+
+# Build output
 dist/
+
+# Python
 __pycache__/
 *.pyc
 
-.venv/
-*.xlsx
+# Adapter run outputs & scratch (the .py source is tracked, these are not)
+*.log
+*.csv
+*.png
+nj_*.json
+vt_*.json
 
-.venv/
-*.xlsx
+# Personal notes / scratch
+Personal/
