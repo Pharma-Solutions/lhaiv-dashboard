@@ -78,6 +78,18 @@
   .callout{margin-top:16px;font-size:12.5px;color:var(--ink2);background:var(--plane);
     border:1px solid var(--border);border-left:3px solid var(--warn);border-radius:8px;padding:11px 13px;}
   .callout b{color:var(--ink);}
+  /* agency table: fit all 8 columns to width (no horizontal clipping) */
+  #tbl{table-layout:fixed;}
+  #tbl th, #tbl td{white-space:normal;overflow-wrap:anywhere;}
+  #tbl td.wrap{min-width:0;}
+  #tbl th:nth-child(1),#tbl td:nth-child(1){width:8%}
+  #tbl th:nth-child(2),#tbl td:nth-child(2){width:22%}
+  #tbl th:nth-child(3),#tbl td:nth-child(3){width:8%}
+  #tbl th:nth-child(4),#tbl td:nth-child(4){width:16%}
+  #tbl th:nth-child(5),#tbl td:nth-child(5){width:8%}
+  #tbl th:nth-child(6),#tbl td:nth-child(6){width:12%}
+  #tbl th:nth-child(7),#tbl td:nth-child(7){width:9%}
+  #tbl th:nth-child(8),#tbl td:nth-child(8){width:17%}
   .pipe{display:flex;height:34px;border-radius:8px;overflow:hidden;border:1px solid var(--border);}
   .pipe div{display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:640;min-width:26px;}
   .decisions{display:flex;flex-direction:column;gap:9px;}
@@ -115,7 +127,7 @@
     <div>
       <div class="brandrow"><div class="beacon">V</div>
         <div><h1>LighthouseAI Verified &mdash; License Data Tracker</h1>
-        <div class="sub">Availability, cost, and Hermai coverage across licensing agencies</div></div>
+        <div class="sub">Acquisition status across pharmacy &amp; related licensing agencies</div></div>
       </div>
     </div>
     <div>
@@ -131,14 +143,14 @@
 
   <div class="grid2" style="margin-top:18px">
     <div class="card">
-      <h3>Data availability</h3>
-      <p class="cap">Is the licensing data publicly available for each agency?</p>
-      <div id="publicBars"></div>
+      <h3>Acquisition outcome</h3>
+      <p class="cap">Where each in-scope agency stands on getting the data.</p>
+      <div id="outcomeBars"></div>
     </div>
     <div class="card">
-      <h3>Hermai coverage</h3>
-      <p class="cap">Can Hermai source the agency's data?</p>
-      <div id="hermaiBars"></div>
+      <h3>How the data is provided</h3>
+      <p class="cap">Acquisition mechanism (in-scope agencies).</p>
+      <div id="mechBars"></div>
     </div>
   </div>
 
@@ -150,18 +162,9 @@
       <div class="callout" id="costNote"></div>
     </div>
     <div class="card">
-      <h3>How the data is provided</h3>
-      <p class="cap">Acquisition mechanism per agency.</p>
-      <div id="mechBars"></div>
-    </div>
-  </div>
-
-  <div class="card" style="margin-top:18px">
-    <h3>Data content</h3>
-    <p class="cap">Which agencies publish status/expiration and disciplinary-action detail.</p>
-    <div class="grid2" style="gap:26px">
-      <div><div class="minih">Includes status / expiration</div><div id="statusBars"></div></div>
-      <div><div class="minih">Includes disciplinary action</div><div id="discBars"></div></div>
+      <h3>Hermai reliance</h3>
+      <p class="cap">Agencies flagged as needing Hermai — the number to drive toward zero.</p>
+      <div id="hermaiBars"></div>
     </div>
   </div>
 
@@ -176,8 +179,7 @@
         <th data-k="state">State</th><th data-k="agency">Agency</th>
         <th data-k="public">Public?</th><th data-k="mechanism">Provided how</th>
         <th data-k="cost">Cost?</th><th data-k="fee">Fee</th>
-        <th data-k="hermai">Hermai?</th><th data-k="inclStatus">Status</th>
-        <th data-k="inclDiscipline">Discipline</th><th data-k="outcome">Outcome</th>
+        <th data-k="hermai">Hermai?</th><th data-k="outcome">Outcome</th>
       </tr></thead>
       <tbody id="tbody"></tbody>
     </table>
@@ -193,7 +195,7 @@ const yn = v => { v=(v||"").trim().toLowerCase();
   if(["y","yes","true"].includes(v)) return "Yes";
   if(["n","no","false"].includes(v)) return "No";
   return v ? v : "(blank)"; };
-function countBy(arr,key,norm){const m={};arr.forEach(r=>{let v=(r[key]||"").trim()||"(blank)";if(norm)v=norm(r[key]);m[v]=(m[v]||0)+1});return m;}
+function countBy(arr,key,norm){const m={};arr.forEach(r=>{let v=norm?norm(r[key]):((r[key]||"").trim()||"(blank)");m[v]=(m[v]||0)+1});return m;}
 function bars(el,rows,color){
   const max=Math.max(1,...rows.map(r=>r.v));
   document.getElementById(el).innerHTML = rows.length ? rows.map(r=>
@@ -201,63 +203,74 @@ function bars(el,rows,color){
     `<div class="track"><div class="fill" style="width:${r.v/max*100}%;background:${r.c||color}"></div></div>`+
     `<div class="val">${r.v}</div></div>`).join("") : `<div class="cap">No data yet.</div>`;
 }
-function ynRows(map){ // fixed order Yes / No / blank, with status colors
-  const order=[["Yes","var(--good)"],["No","var(--gray)"],["(blank)","var(--gray-l)"]];
-  return order.filter(([k])=>map[k]).map(([k,c])=>({n:k,v:map[k],c}));
-}
 
-const N = R.length;
-const states = new Set(R.map(r=>r.state).filter(Boolean)).size;
-const pub = countBy(R,"public",yn);
-const cost = countBy(R,"cost",yn);
-const herm = countBy(R,"hermai",yn);
-const populated = R.filter(r=>[r.public,r.cost,r.hermai,r.mechanism,r.outcome].some(x=>(x||"").trim())).length;
+const OUT = "Out of Scope";
+const inScope = R.filter(r => (r.outcome||"").trim() !== OUT);
+const N = inScope.length;
+const outScope = R.length - N;
+const obtained = inScope.filter(r => (r.outcome||"").toLowerCase().startsWith("obtained")).length;
+const notObtained = inScope.filter(r => (r.outcome||"").toLowerCase().startsWith("not obtained")).length;
+const herm = countBy(inScope, "hermai", yn);
+const cost = countBy(inScope, "cost", yn);
+const pub  = countBy(inScope, "public", yn);
 
 document.getElementById("lede").innerHTML =
-  (populated < N || N<=1
-    ? `<b>Template preview.</b> ${populated} of ${N} agency ${N===1?"row is":"rows are"} populated so far &mdash; charts fill in as the tracker is completed. `
-    : "") +
-  `Tracking <b>${N}</b> agencies across <b>${states}</b> ${states===1?"jurisdiction":"jurisdictions"}. `+
-  `Publicly available: <b>${pub["Yes"]||0}</b> &middot; on Hermai: <b>${herm["Yes"]||0}</b> &middot; carry a fee: <b>${cost["Yes"]||0}</b>.`;
+  `<b>${R.length}</b> agency records &mdash; <b>${N}</b> in scope, <b>${outScope}</b> out of scope. `+
+  `<b>${obtained}</b> of ${N} in-scope agencies have data <b>obtained</b>; <b>${notObtained}</b> not yet. `+
+  `Publicly available: <b>${pub["Yes"]||0}</b> &middot; carry a fee: <b>${cost["Yes"]||0}</b> &middot; `+
+  `still flagged for <b>Hermai</b>: <b>${herm["Yes"]||0}</b> (the number to drive toward zero).`;
 
 const tiles=[
-  {k:states,l:"Jurisdictions",n:"distinct states",accent:true},
-  {k:N,l:"Agencies tracked",n:`${populated} populated`},
-  {k:pub["Yes"]||0,l:"Publicly available",n:`${pub["No"]||0} not public`,accent:true},
-  {k:cost["Yes"]||0,l:"Carry a fee",n:`${cost["No"]||0} free`},
-  {k:herm["Yes"]||0,l:"On Hermai",n:`${herm["No"]||0} not on Hermai`},
+  {k:N,l:"Agencies in scope",n:`${outScope} out of scope`,accent:true},
+  {k:obtained,sub:`/${N}`,l:"Data obtained",n:`${Math.round(obtained/Math.max(1,N)*100)}% of in-scope`,accent:true},
+  {k:notObtained,l:"Not yet obtained",n:"acquisition pending"},
+  {k:herm["Yes"]||0,l:"Hermai-flagged",n:`${herm["No"]||0} without Hermai`},
+  {k:cost["Yes"]||0,l:"Carry a fee",n:`${cost["No"]||0} free / no cost`},
+  {k:pub["Yes"]||0,l:"Publicly available",n:`${pub["No"]||0} not public`},
 ];
 document.getElementById("tiles").innerHTML = tiles.map(t=>
-  `<div class="tile ${t.accent?'accent':''}"><div class="k">${t.k}</div>`+
+  `<div class="tile ${t.accent?'accent':''}"><div class="k">${t.k}${t.sub?`<small>${t.sub}</small>`:''}</div>`+
   `<div class="l">${t.l}</div><div class="n">${t.n}</div></div>`).join("");
 
-bars("publicBars", ynRows(pub));
-bars("hermaiBars", ynRows(herm));
-bars("costBars", ynRows(cost));
-bars("statusBars", ynRows(countBy(R,"inclStatus",yn)));
-bars("discBars", ynRows(countBy(R,"inclDiscipline",yn)));
+// outcome ladder (in-scope, ordered)
+const oc = countBy(inScope, "outcome");
+const ocOrder = ["Obtained - Free","Obtained - Purchased","Obtained","Partially Obtained - Still working","Not Obtained"];
+const ocColor = {"Obtained - Free":"var(--good)","Obtained - Purchased":"var(--blue)","Obtained":"var(--blue-m)",
+                 "Partially Obtained - Still working":"var(--warn)","Not Obtained":"var(--gray)"};
+const ocRows = ocOrder.filter(k=>oc[k]).map(k=>({n:k,v:oc[k],c:ocColor[k]}));
+Object.keys(oc).forEach(k=>{ if(!ocOrder.includes(k) && k!=="(blank)") ocRows.push({n:k,v:oc[k],c:"var(--gray)"}); });
+bars("outcomeBars", ocRows);
 
-const mech = countBy(R,"mechanism");
-const mechRows = Object.entries(mech).filter(([k])=>k!=="(blank)").sort((a,b)=>b[1]-a[1]).map(([n,v])=>({n,v}));
-bars("mechBars", mechRows, "var(--blue)");
+const mech = countBy(inScope, "mechanism");
+delete mech["(blank)"]; delete mech["Not Applicable"];
+bars("mechBars", Object.entries(mech).sort((a,b)=>b[1]-a[1]).map(([n,v])=>({n,v})), "var(--blue)");
 
-const feeRows = R.filter(r=>(r.fee||"").toString().trim());
+const ynRows = (m)=>[["Yes","var(--warn)"],["No","var(--good)"],["(blank)","var(--gray-l)"],["Unknown","var(--gray)"]]
+  .filter(([k])=>m[k]).map(([k,c])=>({n:k,v:m[k],c}));
+bars("costBars", [["Free / no cost", cost["No"]||0,"var(--good)"],["Paid", cost["Yes"]||0,"var(--warn)"],
+                  ["Unknown", cost["Unknown"]||0,"var(--gray)"]].filter(r=>r[1]).map(([n,v,c])=>({n,v,c})));
+const feeRows = inScope.filter(r=>(r.fee||"").toString().trim() && (r.fee||"").toString().trim()!=="0");
 document.getElementById("costNote").innerHTML =
-  `<b>${cost["Yes"]||0}</b> agencies carry a fee; <b>${feeRows.length}</b> have a fee amount recorded. Recurring cost depends on pull cadence.`;
+  `<b>${cost["Yes"]||0}</b> agencies carry a fee; <b>${feeRows.length}</b> have a fee amount recorded. Purchases go through the human approval gate.`;
+bars("hermaiBars", [["Flagged for Hermai", herm["Yes"]||0,"var(--warn)"],["No Hermai needed", herm["No"]||0,"var(--good)"]]
+     .filter(r=>r[1]).map(([n,v,c])=>({n,v,c})));
 
 // table
 let sortK="state",sortDir=1;
+const ocPill = o => { o=(o||"").toLowerCase();
+  if(o.startsWith("obtained")) return "st-del"; if(o.startsWith("partially")) return "st-path";
+  if(o.startsWith("not obtained")) return "st-part"; if(o===OUT.toLowerCase()) return "st-out"; return "st-out"; };
 function render(){
   const q=document.getElementById("search").value.toLowerCase();
-  let rows=R.filter(r=>!q||[r.state,r.agency,r.mechanism,r.outcome,r.public,r.cost,r.hermai].join(" ").toLowerCase().includes(q));
+  let rows=R.filter(r=>!q||[r.state,r.agency,r.mechanism,r.outcome,r.cost,r.hermai].join(" ").toLowerCase().includes(q));
   rows.sort((a,b)=>{const x=(a[sortK]||"").toString(),y=(b[sortK]||"").toString();return x<y?-sortDir:x>y?sortDir:0;});
   const cell=v=>v&&v.toString().trim()?v:'<span style="color:var(--muted)">&mdash;</span>';
   document.getElementById("tbody").innerHTML=rows.map(r=>
     `<tr><td><b>${cell(r.state)}</b></td><td>${cell(r.agency)}</td>`+
     `<td>${cell(yn(r.public))}</td><td>${cell(r.mechanism)}</td>`+
     `<td class="${yn(r.cost)==='Yes'?'paidY':''}">${cell(yn(r.cost))}</td><td class="wrap">${cell(r.fee)}</td>`+
-    `<td>${cell(yn(r.hermai))}</td><td>${cell(yn(r.inclStatus))}</td>`+
-    `<td>${cell(yn(r.inclDiscipline))}</td><td class="wrap">${cell(r.outcome)}</td></tr>`).join("");
+    `<td class="${yn(r.hermai)==='Yes'?'paidY':''}">${cell(yn(r.hermai))}</td>`+
+    `<td><span class="pill ${ocPill(r.outcome)}">${cell(r.outcome)}</span></td></tr>`).join("");
   document.getElementById("tblCount").textContent=`${rows.length} of ${R.length} agencies`;
 }
 document.querySelectorAll("th").forEach(th=>th.addEventListener("click",()=>{
@@ -266,9 +279,9 @@ document.getElementById("search").addEventListener("input",render);
 render();
 
 document.getElementById("foot").innerHTML=
-  `<b>Source:</b> License Data Tracker (simplified schema). <b>Schema:</b> ${META.schema}. `+
-  `Y/N fields are normalized (Yes/No/blank). "Outcome" is shown verbatim pending a defined value set. `+
-  `Layout will be tuned to real distributions once the tracker is fully populated.`;
+  `<b>Source:</b> License Data Tracker (schema: ${META.schema}). In-scope excludes rows marked "Out of Scope". `+
+  `"Hermai reliance" counts agencies still flagged Hermai-recommended &mdash; the bulk-path work aims to drive this to zero. `+
+  `Y/N fields normalized (Yes/No/blank).`;
 
 document.getElementById("themeBtn").addEventListener("click",()=>{
   const r=document.documentElement;const cur=r.getAttribute("data-theme");
