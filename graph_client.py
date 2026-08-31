@@ -19,6 +19,23 @@ TOKEN_URL = "https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token"
 
 
 def get_token(tenant_id, client_id, client_secret):
+    # Guard (added 2026-08): fail loudly with the REAL reason instead of a cryptic
+    # "404 Not Found for login.microsoftonline.com//oauth2/..." — that double-slash 404
+    # means the tenant came through EMPTY (an unset repo secret, or a secret saved as an
+    # Environment secret while the job declares no `environment:`, or a name mismatch).
+    missing = [name for name, val in (
+        ("tenant_id", tenant_id), ("client_id", client_id), ("client_secret", client_secret)
+    ) if not (val and str(val).strip())]
+    if missing:
+        raise SystemExit(
+            "Graph auth: missing/empty secret(s): " + ", ".join(missing) + ". "
+            "Set them as REPOSITORY secrets (Settings -> Secrets and variables -> Actions) "
+            "and confirm the names match what the workflow references."
+        )
+    tenant_id = str(tenant_id).strip().strip("/")   # tolerate a trailing slash / stray whitespace
+    client_id = str(client_id).strip()
+    client_secret = str(client_secret).strip()
+
     resp = requests.post(
         TOKEN_URL.format(tenant=tenant_id),
         data={
@@ -29,7 +46,9 @@ def get_token(tenant_id, client_id, client_secret):
         },
         timeout=60,
     )
-    resp.raise_for_status()
+    if not resp.ok:
+        # 401 invalid_client -> wrong/expired client secret; 400 -> bad tenant/scope.
+        raise RuntimeError(f"Graph token request failed: {resp.status_code} {resp.text[:300]}")
     return resp.json()["access_token"]
 
 
@@ -45,7 +64,12 @@ def download_shared_file(share_url, token, out_path):
     share_id = _encode_share_url(share_url)
     url = f"{GRAPH}/shares/{share_id}/driveItem/content"
     resp = requests.get(url, headers=headers, allow_redirects=True, timeout=300)
-    resp.raise_for_status()
+    if not resp.ok:
+        raise RuntimeError(
+            f"SharePoint download failed: {resp.status_code} {resp.text[:300]}. "
+            "A 403 'accessDenied' usually means the Azure app needs Graph application "
+            "permission Sites.Read.All (or Files.Read.All) WITH admin consent granted."
+        )
     with open(out_path, "wb") as f:
         f.write(resp.content)
     return out_path
