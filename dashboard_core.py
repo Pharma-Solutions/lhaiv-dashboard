@@ -24,27 +24,28 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # ---------- schema detection ----------
 
 DISCOVERY_SHEET = "API Discovery Tracker"
-SIMPLIFIED_HEADERS = {"State", "Agency", "Hermai? (Y/N)"}
 
 
 def _detect_schema(xlsx_path):
+    """discovery = original API Discovery Tracker; simplified = License Data Tracker
+    (any sheet with State + Agency + an Outcome/How-provided column — tolerant of header renames)."""
     wb = openpyxl.load_workbook(xlsx_path, read_only=True, data_only=True)
     try:
         if DISCOVERY_SHEET in wb.sheetnames:
             return "discovery", None
-        # look for the simplified header row on any sheet
         for name in wb.sheetnames:
             ws = wb[name]
             for i, row in enumerate(ws.iter_rows(values_only=True)):
-                vals = {str(c).strip() for c in row if c is not None}
-                if SIMPLIFIED_HEADERS.issubset(vals):
+                low = {str(c).strip().lower() for c in row if c is not None}
+                if "state" in low and "agency" in low and (
+                        "outcome" in low or any("provided" in v for v in low)):
                     return "simplified", (name, i)
-                if i > 8:
+                if i > 10:
                     break
     finally:
         wb.close()
-    raise RuntimeError("Unrecognized tracker schema — no 'API Discovery Tracker' sheet "
-                       "and no simplified header row (State / Agency / Hermai? (Y/N)) found.")
+    raise RuntimeError("Unrecognized tracker schema — no 'API Discovery Tracker' sheet and "
+                       "no simplified header row (State / Agency / Outcome or How-provided) found.")
 
 
 def extract(xlsx_path):
@@ -132,14 +133,14 @@ SIMPLIFIED_COLS = {
     "agency": "Agency",
     "url": "Agency URL",
     "public": "Is the data publicly available",       # prefix match (header carries " ? (Y/N)")
-    "inclStatus": "Includes Status and/or Expiration",
-    "inclDiscipline": "Includes Disciplinary Action",
-    "contacted": "Contacted Agency?",
+    "inclStatus": "Includes Status and/or Expiration",  # absent in newer trackers -> blank
+    "inclDiscipline": "Includes Disciplinary Action",   # absent in newer trackers -> blank
+    "contacted": "Contacted Agency",
     "outcome": "Outcome",
     "mechanism": "How is the data provided?",
-    "cost": "Is there a cost?",
+    "cost": "Is there a cost",
     "fee": "Fee Amount",
-    "hermai": "Hermai?",
+    "hermai": "Hermai",                                 # matches "Hermai?" and "Hermai Recommended? (Y/N)"
 }
 
 
