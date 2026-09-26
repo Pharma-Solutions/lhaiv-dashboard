@@ -75,6 +75,24 @@ LOCATORS = {
 # this portal's separate BUSINESS Download search (~88 types — a future --business mode); drug
 # manufacturers / wholesalers / devices are the separate NJ DOH system (healthapps fdSearch).
 NJ_PERSONNEL_TYPES = ["Pharmacist", "Pharmacist Graduate License", "Pharmacy Intern", "Pharmacy Technician"]
+
+# --business scope: the NJ DRUG CONTROL UNIT (CDS) establishments + supply-chain firms.
+# These live in the SAME verification_bulk module but behind ?facility=Y, whose License
+# Type dropdown carries 88 business options. Confirmed live 2026-09-18: that page has NO
+# CAPTCHA, and these six labels are present verbatim. This is the CDS-registry dimension
+# the general NJ rosters do not cover.
+NJ_BUSINESS_URL = os.environ.get(
+    "NJ_BULK_URL_BUSINESS",
+    "https://newjersey.mylicense.com/verification_bulk/Search.aspx?facility=Y",
+)
+NJ_BUSINESS_TYPES = [
+    "CDS Pharmacy",
+    "CDS Out of State Pharmacy",
+    "CDS ADS Branch",
+    "CDS Automated Dispensing Sys",
+    "Manufacturer",
+    "Wholesaler/Distributor",
+]
 # Keyword fallback, used ONLY when --types is passed (substring match).
 DEFAULT_TYPE_KEYWORDS = ["pharmacist", "pharmacy intern", "pharmacy tech"]
 
@@ -168,17 +186,44 @@ def _set_all(select_el):
 
 
 def _click_submit(page):
-    for el in page.query_selector_all(
-            "input[type=submit], input[type=button], button, [role=button], a"):
-        try:
-            t = ((el.inner_text() or "") + " " + (el.get_attribute("value") or "")
-                 + " " + _name_of(el)).strip().lower()
-            if el.is_visible() and any(h in t for h in LOCATORS["submit_hints"]) \
-                    and "reset" not in t and "clear" not in t:
-                el.click(); return True
-        except Exception:
-            pass
-    return False
+    """Click the real SUBMIT control, preferring it BY KIND rather than by position.
+
+    A comma-separated selector returns matches in DOCUMENT ORDER, not selector order.
+    On the business page (?facility=Y) an <a>Person Search</a> cross-link sits at char
+    ~6,558 while the real sch_button submit is at ~19,415 -- so scanning anchors in the
+    same pass clicked the LINK, navigated to ?facility=N, and every licence type then
+    failed with "'Download List' not found". The person page (?facility=N) carries no
+    such cross-link, which is why this stayed latent through the whole personnel run.
+
+    So: genuine submit/button controls first; anchors only as a last resort, and never
+    one whose href jumps to a different search scope.
+    """
+    def _try(selector, allow_scope_links=False):
+        for el in page.query_selector_all(selector):
+            try:
+                if not el.is_visible():
+                    continue
+                t = ((el.inner_text() or "") + " " + (el.get_attribute("value") or "")
+                     + " " + _name_of(el)).strip().lower()
+                if not any(h in t for h in LOCATORS["submit_hints"]):
+                    continue
+                if "reset" in t or "clear" in t:
+                    continue
+                if not allow_scope_links:
+                    href = (el.get_attribute("href") or "")
+                    if href and "search.aspx" in href.lower():
+                        continue          # a scope cross-link, not the submit
+                el.click()
+                return True
+            except Exception:
+                pass
+        return False
+
+    if _try("input[type=submit]"):                              # the real sch_button
+        return True
+    if _try("input[type=button], button, [role=button]"):       # other genuine buttons
+        return True
+    return _try("a")                                            # last resort, no scope links
 
 
 def _try_download_link(page):
@@ -711,10 +756,23 @@ def main():
     ap.add_argument("--out", default="nj_licenses.csv")
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--diagnose", action="store_true", help="click Search once and dump the post-Search page")
+    ap.add_argument("--business", action="store_true",
+                    help="NJ Drug Control Unit (CDS) establishments + manufacturers/"
+                         "wholesalers via the ?facility=Y business search")
     args = ap.parse_args()
-    global LIMIT, TYPE_KEYWORDS, EXACT_TYPES, ALL_QUERY
+    global LIMIT, TYPE_KEYWORDS, EXACT_TYPES, ALL_QUERY, NJ_URL
     LIMIT = args.limit
     ALL_QUERY = args.all_query
+    if args.business:
+        # same module, same click chain (Search -> Download List -> Confirmation ->
+        # Continue -> PrefDetails -> Download); only the URL and the type allowlist change.
+        NJ_URL = NJ_BUSINESS_URL
+        EXACT_TYPES = list(NJ_BUSINESS_TYPES)
+        if args.out == "nj_licenses.csv":
+            args.out = "nj_drug_control_unit.csv"
+        log("--business: NJ Drug Control Unit (CDS) + supply-chain scope")
+        log(f"  url   : {NJ_URL}")
+        log(f"  types : {EXACT_TYPES}")
     if args.types.strip():
         TYPE_KEYWORDS = [k.strip().lower() for k in args.types.split(",") if k.strip()]
         EXACT_TYPES = []   # --types switches to keyword matching, overriding the exact personnel default
