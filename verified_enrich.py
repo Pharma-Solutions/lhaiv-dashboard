@@ -77,12 +77,20 @@ def pick_state_col(df, cols):
     primary = pick(cols, STATE_COLS)
     if primary is None:
         return None
-    if len(distinct(primary)) > 1:
-        # Already a real, varying state column. LEAVE IT ALONE. An earlier attempt here
-        # ranked candidates by "most distinct values" and that is not a proxy for
-        # "physical": it swapped LA's `State (P)` (physical) for `State (M)` (mailing)
-        # and OR's `DOMICILESTATE` for `BUS_STATE`, moving ~970 rows wrongly. The defect
-        # being fixed is specifically a CONSTANT stamp, so only that case is overridden.
+    # A column whose NAME explicitly denotes the physical/practice location is the true
+    # residency state even when it is constant across the file. Do NOT override it with a
+    # varying mailing column: an in-state facility type (AR hospitals, specialty pharmacies)
+    # has Physical State == the jurisdiction for every row (all Resident), while its Mail
+    # State varies because of out-of-state corporate HQ addresses — overriding to Mail State
+    # wrongly stamped 12 in-state AR facilities Nonresident. The constant-override below is
+    # only for a constant *issuing/jurisdiction stamp*, i.e. a generically-named column.
+    primary_is_physical = any(t in primary.lower() for t in ("physical", "phys", "facility"))
+    if len(distinct(primary)) > 1 or primary_is_physical:
+        # A real, varying state column (or an explicitly physical one). LEAVE IT ALONE. An
+        # earlier attempt here ranked candidates by "most distinct values" and that is not a
+        # proxy for "physical": it swapped LA's `State (P)` (physical) for `State (M)`
+        # (mailing) and OR's `DOMICILESTATE` for `BUS_STATE`, moving ~970 rows wrongly. The
+        # defect being overridden is specifically a CONSTANT, generically-named stamp.
         return primary
 
     low = {c.lower().strip(): c for c in cols}
