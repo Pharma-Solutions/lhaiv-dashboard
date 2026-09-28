@@ -31,13 +31,26 @@ NOTES
 import argparse, sys, time, re, json
 import pandas as pd
 
+# Windows consoles default to cp1252, which cannot encode characters like the
+# warning glyph below and would crash the run *before* the enriched file is
+# written. Force UTF-8 on the streams (no effect on the CSV, which is written
+# UTF-8 by to_csv regardless).
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 # ---- column auto-detection ------------------------------------------------
 NAME_COLS  = ["name","location_name","businessname","business name","legal_name","organization_name","sort name","facility name","full name","combined_name"]
 TYPE_COLS  = ["license type","registration_type","licensetype","license_type","licensetypedescription","description","profession","proftype","class","les_description","lst_description","factype"]
-STATE_COLS = ["state","phys_state","facilitystate","mailing state","addr state","ba_state","st"]
-CITY_COLS  = ["city","phys_city","facilitycity","mailing city","addr city","ba_city"]
-ZIP_COLS   = ["zip","zipcode","zip code","postal","phys_zip","facilityzip","mailing zip","ba_zip","mailzipcode"]
-ADDR_COLS  = ["address 1","address1","address","street","phys_address1","facilityaddress","mailing address 1","mailing_address","addr 1","ba_address","adress"]
+# Physical/practice-location fields lead (they decide residency); mailing is the fallback.
+# NOTE: an "Incorporation State" column is the entity's domicile (e.g. DE), NOT its physical
+# location, so it must never be read as the residency state — pick_state_col drops it below.
+STATE_COLS = ["physical state","physical_state","phys state","physicalstate","state","phys_state","facilitystate","mail state","mailstate","mailing state","addr state","ba_state","st"]
+CITY_COLS  = ["physical city","physicalcity","phys city","city","phys_city","facilitycity","mail city","mailing city","addr city","ba_city"]
+ZIP_COLS   = ["physical zip","physicalzip","phys zip","zip","zipcode","zip code","postal","phys_zip","facilityzip","mail zip","mailing zip","ba_zip","mailzipcode"]
+ADDR_COLS  = ["physical street","physical address","address 1","address1","address","street","phys_address1","facilityaddress","mail street","mailing address 1","mailing_address","addr 1","ba_address","adress"]
 
 def pick_state_col(df, cols):
     """Choose the column that actually holds a PHYSICAL state.
@@ -54,6 +67,12 @@ def pick_state_col(df, cols):
     def distinct(c):
         vals = {normalize_state(v) for v in df[c].tolist()}
         return {v for v in vals if v}
+
+    # An "Incorporation State" / "State of Incorporation" column is the entity's legal
+    # domicile, not where it physically operates, so it must never be treated as the
+    # residency state (AR's GLSuite roster has one, and it varies — DE/TX/etc. — so it
+    # would otherwise be accepted as a real, varying state column and mis-key residency).
+    cols = [c for c in cols if "incorpor" not in c.lower()]
 
     primary = pick(cols, STATE_COLS)
     if primary is None:
@@ -377,9 +396,9 @@ def main():
         print("  resident/nonresident:", vc)
         tot = len(rn); res = vc.get("Resident",0); non = vc.get("Nonresident",0); unk = vc.get("Unknown",0)
         if tot and (res == 0 or non == 0):
-            print("  ⚠ one-sided result — the state column was likely mis-detected; verify before using.")
+            print("  [!] one-sided result — the state column was likely mis-detected; verify before using.")
         elif tot and unk/tot > 0.4:
-            print(f"  ⚠ {unk/tot:.0%} Unknown — address/state parsing weak for this file; verify before using.")
+            print(f"  [!] {unk/tot:.0%} Unknown — address/state parsing weak for this file; verify before using.")
 
         if a.npi:
             work = df.sample(min(a.sample, len(df)), random_state=1) if a.sample else df
