@@ -1,0 +1,62 @@
+[
+ {
+  "label": "Controlled Substances Special Use Authorization",
+  "value": "0eh3d00000002wvAAA",
+  "category": "Health",
+  "entity": "establishment"
+ },
+ {
+  "label": "Controlled Substances Special Use Authorization - Analytical Laboratory (450)",
+  "value": "0ehcr0000002KHBAA2",
+  "category": "Health",
+  "entity": "establishment"
+ },
+ {
+  "label": "Drug or Device Manufacturer",
+  "value": "0eh3d00000002xZAAQ",
+  "category": "Health",
+  "entity": "establishment"
+ },
+ {
+  "label": "Home Medical Oxygen Provider",
+  "value": "0eh3d00000002xaAAA",
+  "category": "Health",
+  "entity": "establishment"
+ },
+ {
+  "label": "Pharmacist",
+  "value": "0eh3d00000002xbAAA",
+  "category": "Health",
+  "entity": "individual"
+ },
+ {
+  "label": "Pharmacy (In-State)",
+  "value": "0eh3d00000002xcAAA",
+  "category": "Health",
+  "entity": "establishment"
+ },
+ {
+  "label": "Pharmacy (Out-of-State)",
+  "value": "0eh3d00000002xdAAA",
+  "category": "Health",
+  "entity": "establishment"
+ },
+ {
+  "label": "Pharmacy Technician",
+  "value": "0eh3d000000051TAAQ",
+  "category": "Health",
+  "entity": "individual"
+ },
+ {
+  "label": "Third-Party Logistics Provider",
+  "value": "0eh3d00000002xeAAA",
+  "category": "Health",
+  "entity": "establishment"
+ },
+ {
+  "label": "Wholesale Distributor of Prescription Drugs",
+  "value": "0eh3d00000002xfAAA",
+  "category": "Health",
+  "entity": "establishment"
+ }
+]

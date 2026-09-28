@@ -1,0 +1,1272 @@
+[
+ {
+  "category": "Health",
+  "label": "Acupuncturist",
+  "value": "0eh3d00000002x0AAA"
+ },
+ {
+  "category": "Health",
+  "label": "Advanced Practice Registered Nurse",
+  "value": "0ehcr000000FqcdAAC"
+ },
+ {
+  "category": "Health",
+  "label": "Anesthesiologist Assistant",
+  "value": "0eh3d00000002xFAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Art Therapist",
+  "value": "0eh3d00000002x1AAA"
+ },
+ {
+  "category": "Health",
+  "label": "Athletic Trainer",
+  "value": "0eh3d00000002xGAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Audiologist",
+  "value": "0eh3d00000002x8AAA"
+ },
+ {
+  "category": "Health",
+  "label": "Behavior Analyst",
+  "value": "0eh3d00000002x2AAA"
+ },
+ {
+  "category": "Health",
+  "label": "Body Piercer",
+  "value": "0eh3d00000002wzAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Chiropractic Radiological Technician",
+  "value": "0eh3d00000002wuAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Chiropractic Technician",
+  "value": "0eh3d00000002wsAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Chiropractor",
+  "value": "0eh3d00000002wtAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Clinical Substance Abuse Counselor",
+  "value": "0eh3d00000002xqAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Clinical Supervisor In-Training",
+  "value": "0eh3d00000002xrAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Clinical Supervisor, Independent",
+  "value": "0eh3d00000002xsAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Clinical Supervisor, Intermediate",
+  "value": "0eh3d00000002xtAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Controlled Substances Special Use Authorization",
+  "value": "0eh3d00000002wvAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Controlled Substances Special Use Authorization - Analytical Laboratory (450)",
+  "value": "0ehcr0000002KHBAA2"
+ },
+ {
+  "category": "Health",
+  "label": "Dance Therapist",
+  "value": "0eh3d00000002x3AAA"
+ },
+ {
+  "category": "Health",
+  "label": "Dental Hygienist",
+  "value": "0eh3d00000002wwAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Dental Therapist",
+  "value": "0eh3d0000000gjHAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Dentist",
+  "value": "0eh3d00000002wxAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Dietitian",
+  "value": "0eh3d00000002xHAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Expanded Function Dental Auxiliary",
+  "value": "0eh3d00000006wUAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Genetic Counselor",
+  "value": "0eh3d00000007tUAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Hearing Instrument Specialist",
+  "value": "0eh3d00000002xAAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Licensed Practical Nurse",
+  "value": "0eh3d00000002wpAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Licensed Professional Counselor",
+  "value": "0eh3d00000002xPAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Limited X-Ray Machine Operator Permit",
+  "value": "0eh3d00000002xjAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Limited-Scope Naturopathic Doctor",
+  "value": "0eh3d0000000VnCAAU"
+ },
+ {
+  "category": "Health",
+  "label": "Marriage and Family Therapist",
+  "value": "0eh3d00000002xRAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Marriage and Family Therapist Training License",
+  "value": "0eh3d00000002xSAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Massage Therapist or Bodywork Therapist",
+  "value": "0eh3d00000002xDAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Medicine and Surgery - DO",
+  "value": "0ehcr0000001IqvAAE"
+ },
+ {
+  "category": "Health",
+  "label": "Medicine and Surgery - MD",
+  "value": "0ehcr0000001IpJAAU"
+ },
+ {
+  "category": "Health",
+  "label": "Midwives, Licensed",
+  "value": "0eh3d00000002x4AAA"
+ },
+ {
+  "category": "Health",
+  "label": "Music Therapist",
+  "value": "0eh3d00000002x5AAA"
+ },
+ {
+  "category": "Health",
+  "label": "Naturopathic Doctor",
+  "value": "0eh3d0000000Vn7AAE"
+ },
+ {
+  "category": "Health",
+  "label": "Nurse - Midwife",
+  "value": "0eh3d00000002wqAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Occupational Therapist",
+  "value": "0eh3d00000002xBAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Occupational Therapy Assistant",
+  "value": "0eh3d00000002xCAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Optometrist",
+  "value": "0eh3d00000002xYAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Perfusionist",
+  "value": "0eh3d00000002xNAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Pharmacist",
+  "value": "0eh3d00000002xbAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Pharmacy Technician",
+  "value": "0eh3d000000051TAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Physical Therapist",
+  "value": "0eh3d00000002xgAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Physical Therapist Assistant",
+  "value": "0eh3d00000002xhAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Physician - DO",
+  "value": "0eh3d00000002xOAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Physician - DO Compact",
+  "value": "0eh3d00000002xEAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Physician - MD",
+  "value": "0eh3d00000002xIAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Physician - MD Compact",
+  "value": "0eh3d00000002xJAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Physician Assistant",
+  "value": "0eh3d00000002xKAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Podiatrist",
+  "value": "0eh3d00000002xLAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Prevention Specialist",
+  "value": "0eh3d00000002xuAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Prevention Specialist In-Training",
+  "value": "0eh3d00000002xvAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Professional Counselor Training License",
+  "value": "0eh3d00000002xQAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Provisional Physician Licensure",
+  "value": "0ehcr0000001QEzAAM"
+ },
+ {
+  "category": "Health",
+  "label": "Psychologist",
+  "value": "0eh3d00000002xiAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Radiographer, Licensed",
+  "value": "0eh3d00000002xkAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Registered Nurse",
+  "value": "0eh3d00000002wrAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Registered Sanitarian",
+  "value": "0eh3d00000002xlAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Resident Educational License",
+  "value": "0eh3d000000049AAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Respiratory Care Practitioner",
+  "value": "0eh3d00000002xMAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Sign Language Interpreter - Advanced Deaf",
+  "value": "0eh3d00000002xpAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Sign Language Interpreter - Advanced Hearing",
+  "value": "0eh3d00000002xmAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Sign Language Interpreter - Intermediate Deaf",
+  "value": "0eh3d00000002xnAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Sign Language Interpreter - Intermediate Hearing",
+  "value": "0eh3d00000002xoAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Social Worker",
+  "value": "0eh3d00000002xTAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Social Worker - Advanced Practice",
+  "value": "0eh3d00000002xUAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Social Worker - Independent",
+  "value": "0eh3d00000002xVAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Social Worker - Licensed Clinical",
+  "value": "0eh3d00000002xWAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Social Worker - Training Certificate",
+  "value": "0eh3d00000002xXAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Speech-Language Pathologist",
+  "value": "0eh3d00000002x9AAA"
+ },
+ {
+  "category": "Health",
+  "label": "Substance Abuse Counselor",
+  "value": "0eh3d00000002xwAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Substance Abuse Counselor In-Training",
+  "value": "0eh3d00000002xxAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Tattooist",
+  "value": "0eh3d00000002x6AAA"
+ },
+ {
+  "category": "Trades",
+  "label": "Automatic Fire Sprinkler Contractor",
+  "value": "0eh3d0000000Q8cAAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Automatic Fire Sprinkler Contractor Maintenance",
+  "value": "0eh3d0000000Q8dAAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Automatic Fire Sprinkler Fitter Maintenance",
+  "value": "0eh3d0000000Q8fAAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Automatic Fire Sprinkler Fitter, Journeyman",
+  "value": "0eh3d0000000Q8eAAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Automatic Fire Sprinkler System Apprentice",
+  "value": "0eh3d0000000Q84AAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Automatic Fire Sprinkler System Tester",
+  "value": "0eh3d0000000Q8gAAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Automatic Fire Sprinkler System Tester Learner",
+  "value": "0eh3d0000000Q82AAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Blaster, Class 1",
+  "value": "0eh3d0000000Q9EAAU"
+ },
+ {
+  "category": "Trades",
+  "label": "Blaster, Class 2",
+  "value": "0eh3d0000000Q9FAAU"
+ },
+ {
+  "category": "Trades",
+  "label": "Blaster, Class 3",
+  "value": "0eh3d0000000Q9GAAU"
+ },
+ {
+  "category": "Trades",
+  "label": "Blaster, Class 4",
+  "value": "0eh3d0000000Q9HAAU"
+ },
+ {
+  "category": "Trades",
+  "label": "Blaster, Class 5",
+  "value": "0eh3d0000000Q9IAAU"
+ },
+ {
+  "category": "Trades",
+  "label": "Blaster, Class 6",
+  "value": "0eh3d0000000Q9JAAU"
+ },
+ {
+  "category": "Trades",
+  "label": "Blaster, Class 7",
+  "value": "0eh3d0000000Q9KAAU"
+ },
+ {
+  "category": "Trades",
+  "label": "Boiler-Pressure Vessel Inspector",
+  "value": "0eh3d0000000Q9LAAU"
+ },
+ {
+  "category": "Trades",
+  "label": "Commercial Building Inspector",
+  "value": "0eh3d0000000Q8hAAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Commercial Electrical Inspector",
+  "value": "0eh3d0000000Q8iAAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Commercial Plumbing Inspector",
+  "value": "0eh3d0000000Q8jAAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Cross Connection Control Tester",
+  "value": "0eh3d0000000Q9gAAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Dwelling Contractor Qualifier",
+  "value": "0eh3d0000000Q92AAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Electrical Apprentice",
+  "value": "0eh3d0000000Q85AAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Electrical Apprentice, Industrial",
+  "value": "0eh3d0000000Q86AAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Electrical Apprentice, Residential",
+  "value": "0eh3d0000000Q87AAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Electrician, Registered",
+  "value": "0eh3d0000000Q88AAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Elevator Apprentice",
+  "value": "0eh3d0000000Q93AAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Elevator Apprentice Restricted",
+  "value": "0eh3d0000000Q94AAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Elevator Helper",
+  "value": "0eh3d0000000Q95AAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Elevator Inspector",
+  "value": "0eh3d0000000Q96AAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Elevator Mechanic",
+  "value": "0eh3d0000000Q97AAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Elevator Mechanic Restricted",
+  "value": "0eh3d0000000Q98AAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Fire Detection, Prevention, and Suppression Inspector",
+  "value": "0eh3d0000000Q9MAAU"
+ },
+ {
+  "category": "Trades",
+  "label": "HVAC Qualifier",
+  "value": "0eh3d0000000Q91AAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Journeyman Electrician",
+  "value": "0eh3d0000000Q8mAAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Journeyman Electrician, Industrial",
+  "value": "0eh3d0000000Q8nAAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Journeyman Electrician, Residential",
+  "value": "0eh3d0000000Q8oAAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Journeyman Plumber",
+  "value": "0eh3d0000000Q8rAAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Journeyman Plumber Restricted Appliance",
+  "value": "0eh3d0000000Q8sAAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Journeyman Plumber Restricted Service",
+  "value": "0eh3d0000000Q8tAAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Lift Apprentice",
+  "value": "0eh3d0000000Q99AAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Lift Helper",
+  "value": "0eh3d0000000Q9AAAU"
+ },
+ {
+  "category": "Trades",
+  "label": "Lift Mechanic",
+  "value": "0eh3d0000000Q9BAAU"
+ },
+ {
+  "category": "Trades",
+  "label": "Master Electrician",
+  "value": "0eh3d0000000Q8pAAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Master Electrician, Registered",
+  "value": "0eh3d0000000Q83AAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Master Electrician, Residential",
+  "value": "0eh3d0000000Q8qAAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Master Plumber",
+  "value": "0eh3d0000000Q8uAAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Master Plumber Restricted Appliance",
+  "value": "0eh3d0000000Q8vAAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Master Plumber Restricted Service",
+  "value": "0eh3d0000000Q8wAAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Pipelayer",
+  "value": "0eh3d0000000Q9YAAU"
+ },
+ {
+  "category": "Trades",
+  "label": "Plumbing Apprentice",
+  "value": "0eh3d0000000Q8LAAU"
+ },
+ {
+  "category": "Trades",
+  "label": "Plumbing Learner Restricted Appliance",
+  "value": "0eh3d0000000Q8xAAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Plumbing Learner Restricted Service",
+  "value": "0eh3d0000000Q8yAAE"
+ },
+ {
+  "category": "Trades",
+  "label": "POWTS Inspector",
+  "value": "0eh3d0000000Q9ZAAU"
+ },
+ {
+  "category": "Trades",
+  "label": "POWTS Maintainer",
+  "value": "0eh3d0000000Q9XAAU"
+ },
+ {
+  "category": "Trades",
+  "label": "Soil Erosion Inspector",
+  "value": "0eh3d0000000Q9aAAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Soil Tester",
+  "value": "0eh3d0000000Q9bAAE"
+ },
+ {
+  "category": "Trades",
+  "label": "UDC Construction Inspector",
+  "value": "0eh3d0000000Q9RAAU"
+ },
+ {
+  "category": "Trades",
+  "label": "UDC Electrical Inspector",
+  "value": "0eh3d0000000Q9SAAU"
+ },
+ {
+  "category": "Trades",
+  "label": "UDC HVAC Inspector",
+  "value": "0eh3d0000000Q9TAAU"
+ },
+ {
+  "category": "Trades",
+  "label": "UDC Plumbing Inspector",
+  "value": "0eh3d0000000Q9VAAU"
+ },
+ {
+  "category": "Trades",
+  "label": "Utility Contractor",
+  "value": "0eh3d0000000Q9dAAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Weld Test Conductor",
+  "value": "0eh3d0000000Q9fAAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Welder",
+  "value": "0eh3d0000000Q9eAAE"
+ },
+ {
+  "category": "Business",
+  "label": "Accountant, Certified Public",
+  "value": "0eh3d000000089cAAA"
+ },
+ {
+  "category": "Business",
+  "label": "Aesthetician",
+  "value": "0eh3d000000089oAAA"
+ },
+ {
+  "category": "Business",
+  "label": "Aesthetics Instructor",
+  "value": "0eh3d000000089xAAA"
+ },
+ {
+  "category": "Business",
+  "label": "Agent for Burial Agreements",
+  "value": "0eh3d000000089QAAQ"
+ },
+ {
+  "category": "Business",
+  "label": "Appraiser, Certified General",
+  "value": "0eh3d000000089iAAA"
+ },
+ {
+  "category": "Business",
+  "label": "Appraiser, Certified Residential",
+  "value": "0eh3d000000089kAAA"
+ },
+ {
+  "category": "Business",
+  "label": "Appraiser, Licensed",
+  "value": "0eh3d000000089hAAA"
+ },
+ {
+  "category": "Business",
+  "label": "Architect",
+  "value": "0eh3d0000000899AAA"
+ },
+ {
+  "category": "Business",
+  "label": "Athlete Agent",
+  "value": "0eh3d0000000Q89AAE"
+ },
+ {
+  "category": "Business",
+  "label": "Auctioneer",
+  "value": "0eh3d000000089AAAQ"
+ },
+ {
+  "category": "Business",
+  "label": "Barber",
+  "value": "0eh3d00000008A0AAI"
+ },
+ {
+  "category": "Business",
+  "label": "Barbering Apprentice",
+  "value": "0eh3d000000089HAAQ"
+ },
+ {
+  "category": "Business",
+  "label": "Barbering Instructor",
+  "value": "0eh3d000000089JAAQ"
+ },
+ {
+  "category": "Business",
+  "label": "Cemetery Salesperson",
+  "value": "0eh3d000000089OAAQ"
+ },
+ {
+  "category": "Business",
+  "label": "Cosmetologist",
+  "value": "0eh3d00000008A3AAI"
+ },
+ {
+  "category": "Business",
+  "label": "Cosmetology Apprentice",
+  "value": "0eh3d000000089qAAA"
+ },
+ {
+  "category": "Business",
+  "label": "Cosmetology Instructor",
+  "value": "0eh3d000000089yAAA"
+ },
+ {
+  "category": "Business",
+  "label": "Designer Of Engineering Systems",
+  "value": "0eh3d000000089GAAQ"
+ },
+ {
+  "category": "Business",
+  "label": "Electrologist",
+  "value": "0eh3d000000089sAAA"
+ },
+ {
+  "category": "Business",
+  "label": "Electrology Instructor",
+  "value": "0eh3d000000089wAAA"
+ },
+ {
+  "category": "Business",
+  "label": "Engineer In Training",
+  "value": "0eh3d0000000895AAA"
+ },
+ {
+  "category": "Business",
+  "label": "Firearms Certifier",
+  "value": "0eh3d00000008A7AAI"
+ },
+ {
+  "category": "Business",
+  "label": "Firearms Permit",
+  "value": "0eh3d00000008A8AAI"
+ },
+ {
+  "category": "Business",
+  "label": "Funeral Director",
+  "value": "0eh3d000000089SAAQ"
+ },
+ {
+  "category": "Business",
+  "label": "Funeral Director Apprentice",
+  "value": "0eh3d000000089RAAQ"
+ },
+ {
+  "category": "Business",
+  "label": "Geologist, Professional",
+  "value": "0eh3d000000089DAAQ"
+ },
+ {
+  "category": "Business",
+  "label": "Home Inspector",
+  "value": "0eh3d000000089aAAA"
+ },
+ {
+  "category": "Business",
+  "label": "Hydrologist, Professional",
+  "value": "0eh3d000000089BAAQ"
+ },
+ {
+  "category": "Business",
+  "label": "Juvenile Martial Arts Instructor",
+  "value": "0eh3d0000000Q8AAAU"
+ },
+ {
+  "category": "Business",
+  "label": "Landscape Architect",
+  "value": "0eh3d000000089EAAQ"
+ },
+ {
+  "category": "Business",
+  "label": "Manicuring Instructor",
+  "value": "0eh3d000000089pAAA"
+ },
+ {
+  "category": "Business",
+  "label": "Manicurist",
+  "value": "0eh3d000000089vAAA"
+ },
+ {
+  "category": "Business",
+  "label": "Nursing Home Administrator",
+  "value": "0eh3d000000089bAAA"
+ },
+ {
+  "category": "Business",
+  "label": "Peddler",
+  "value": "0eh3d000000089ZAAQ"
+ },
+ {
+  "category": "Business",
+  "label": "Private Detective",
+  "value": "0eh3d000000089fAAA"
+ },
+ {
+  "category": "Business",
+  "label": "Private Practice of School Psychology",
+  "value": "0eh3d00000008ACAAY"
+ },
+ {
+  "category": "Business",
+  "label": "Private Security Person",
+  "value": "0eh3d000000089eAAA"
+ },
+ {
+  "category": "Business",
+  "label": "Professional Engineer",
+  "value": "0eh3d000000089zAAA"
+ },
+ {
+  "category": "Business",
+  "label": "Professional Land Surveyor",
+  "value": "0eh3d0000000897AAA"
+ },
+ {
+  "category": "Business",
+  "label": "Real Estate Broker",
+  "value": "0eh3d000000089mAAA"
+ },
+ {
+  "category": "Business",
+  "label": "Real Estate Salesperson",
+  "value": "0eh3d000000089lAAA"
+ },
+ {
+  "category": "Business",
+  "label": "Soil Scientist, Professional",
+  "value": "0eh3d000000089CAAQ"
+ },
+ {
+  "category": "Business",
+  "label": "Wisconsin Registered Interior Designer",
+  "value": "0eh3d000000089YAAQ"
+ },
+ {
+  "category": "Manufactured Homes",
+  "label": "Manufactured Home Installer",
+  "value": "0eh3d0000000Q9PAAU"
+ },
+ {
+  "category": "Manufactured Homes",
+  "label": "Manufactured Home Salesperson",
+  "value": "0eh3d0000000Q9QAAU"
+ },
+ {
+  "category": "Unarmed Combat Sports",
+  "label": "Amateur Kickboxing Contestant",
+  "value": "0eh3d0000000Q8EAAU"
+ },
+ {
+  "category": "Unarmed Combat Sports",
+  "label": "Amateur Mixed Martial Arts Contestant",
+  "value": "0eh3d0000000Q8FAAU"
+ },
+ {
+  "category": "Unarmed Combat Sports",
+  "label": "Amateur Muay Thai Contestant",
+  "value": "0eh3d0000000Q8GAAU"
+ },
+ {
+  "category": "Unarmed Combat Sports",
+  "label": "Boxing Judge",
+  "value": "0eh3d0000000Q9CAAU"
+ },
+ {
+  "category": "Unarmed Combat Sports",
+  "label": "Boxing Referee",
+  "value": "0eh3d0000000Q8PAAU"
+ },
+ {
+  "category": "Unarmed Combat Sports",
+  "label": "Federal Boxing ID",
+  "value": "0eh3d0000000Q8MAAU"
+ },
+ {
+  "category": "Unarmed Combat Sports",
+  "label": "Kickboxing Judge",
+  "value": "0eh3d0000000Q8QAAU"
+ },
+ {
+  "category": "Unarmed Combat Sports",
+  "label": "Kickboxing Referee",
+  "value": "0eh3d0000000Q8TAAU"
+ },
+ {
+  "category": "Unarmed Combat Sports",
+  "label": "Matchmaker",
+  "value": "0eh3d0000000Q8ZAAU"
+ },
+ {
+  "category": "Unarmed Combat Sports",
+  "label": "MMA Judge",
+  "value": "0eh3d0000000Q8SAAU"
+ },
+ {
+  "category": "Unarmed Combat Sports",
+  "label": "MMA National ID",
+  "value": "0eh3d0000000Q8CAAU"
+ },
+ {
+  "category": "Unarmed Combat Sports",
+  "label": "MMA Referee",
+  "value": "0eh3d0000000Q8VAAU"
+ },
+ {
+  "category": "Unarmed Combat Sports",
+  "label": "Muay Thai Judge",
+  "value": "0eh3d0000000Q8RAAU"
+ },
+ {
+  "category": "Unarmed Combat Sports",
+  "label": "Muay Thai Referee",
+  "value": "0eh3d0000000Q8UAAU"
+ },
+ {
+  "category": "Unarmed Combat Sports",
+  "label": "Professional Boxing Contestant",
+  "value": "0eh3d0000000Q8HAAU"
+ },
+ {
+  "category": "Unarmed Combat Sports",
+  "label": "Professional Kickboxing Contestant",
+  "value": "0eh3d0000000Q8IAAU"
+ },
+ {
+  "category": "Unarmed Combat Sports",
+  "label": "Professional Mixed Martial Arts Contestant",
+  "value": "0eh3d0000000Q8JAAU"
+ },
+ {
+  "category": "Unarmed Combat Sports",
+  "label": "Professional Muay Thai Contestant",
+  "value": "0eh3d0000000Q8KAAU"
+ },
+ {
+  "category": "Unarmed Combat Sports",
+  "label": "Ringside Physician",
+  "value": "0eh3d0000000Q8WAAU"
+ },
+ {
+  "category": "Unarmed Combat Sports",
+  "label": "Second / Corner",
+  "value": "0eh3d0000000Q8XAAU"
+ },
+ {
+  "category": "Unarmed Combat Sports",
+  "label": "Timekeeper",
+  "value": "0eh3d0000000Q8YAAU"
+ },
+ {
+  "category": "Business",
+  "label": "Accounting Firm",
+  "value": "0eh3d000000089dAAA"
+ },
+ {
+  "category": "Business",
+  "label": "Aesthetics Establishment",
+  "value": "0eh3d0000000896AAA"
+ },
+ {
+  "category": "Business",
+  "label": "Aesthetics School",
+  "value": "0eh3d00000008A2AAI"
+ },
+ {
+  "category": "Business",
+  "label": "Appraisal Management Company",
+  "value": "0eh3d000000089jAAA"
+ },
+ {
+  "category": "Business",
+  "label": "Auction Company",
+  "value": "0eh3d000000089FAAQ"
+ },
+ {
+  "category": "Business",
+  "label": "Barbering Establishment",
+  "value": "0eh3d000000089IAAQ"
+ },
+ {
+  "category": "Business",
+  "label": "Barbering School",
+  "value": "0eh3d00000008A1AAI"
+ },
+ {
+  "category": "Business",
+  "label": "Cemetery Association",
+  "value": "0eh3d000000089LAAQ"
+ },
+ {
+  "category": "Business",
+  "label": "Cemetery Authority (Licensed)",
+  "value": "0eh3d000000089KAAQ"
+ },
+ {
+  "category": "Business",
+  "label": "Cemetery Authority (Registered)",
+  "value": "0eh3d000000089MAAQ"
+ },
+ {
+  "category": "Business",
+  "label": "Cemetery Preneed Seller",
+  "value": "0eh3d000000089PAAQ"
+ },
+ {
+  "category": "Business",
+  "label": "Certificate of Authorization \\u2013 Architecture, Engineer, Designer of Engineering, or Interior Design",
+  "value": "0eh3d0000000898AAA"
+ },
+ {
+  "category": "Business",
+  "label": "Certificate Of Authorization: Geology",
+  "value": "0eh3d000000089WAAQ"
+ },
+ {
+  "category": "Business",
+  "label": "Certificate Of Authorization: Hydrology",
+  "value": "0eh3d000000089XAAQ"
+ },
+ {
+  "category": "Business",
+  "label": "Certificate Of Authorization: Soil Science Corp",
+  "value": "0eh3d000000089VAAQ"
+ },
+ {
+  "category": "Unarmed Combat Sports",
+  "label": "Contest (Event)",
+  "value": "0eh3d0000000Q8zAAE"
+ },
+ {
+  "category": "Business",
+  "label": "Cosmetology Establishment",
+  "value": "0eh3d000000089rAAA"
+ },
+ {
+  "category": "Business",
+  "label": "Cosmetology School",
+  "value": "0eh3d00000008A4AAI"
+ },
+ {
+  "category": "Business",
+  "label": "Crematory Authority",
+  "value": "0eh3d000000089TAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Drug or Device Manufacturer",
+  "value": "0eh3d00000002xZAAQ"
+ },
+ {
+  "category": "Trades",
+  "label": "Dwelling Contractor",
+  "value": "0eh3d0000000Q8NAAU"
+ },
+ {
+  "category": "Trades",
+  "label": "Dwelling Contractor Restricted",
+  "value": "0eh3d0000000Q8OAAU"
+ },
+ {
+  "category": "Trades",
+  "label": "Electrical Contractor",
+  "value": "0eh3d0000000Q8kAAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Electrical Inspection Agency",
+  "value": "0eh3d0000000Q8lAAE"
+ },
+ {
+  "category": "Business",
+  "label": "Electrology Establishment",
+  "value": "0eh3d000000089tAAA"
+ },
+ {
+  "category": "Business",
+  "label": "Electrology School",
+  "value": "0eh3d00000008A5AAI"
+ },
+ {
+  "category": "Trades",
+  "label": "Elevator Contractor",
+  "value": "0eh3d0000000Q9DAAU"
+ },
+ {
+  "category": "Trades",
+  "label": "Fireworks Manufacturer",
+  "value": "0eh3d0000000Q9NAAU"
+ },
+ {
+  "category": "Business",
+  "label": "Funeral Establishment",
+  "value": "0eh3d000000089UAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Home Medical Oxygen Provider",
+  "value": "0eh3d00000002xaAAA"
+ },
+ {
+  "category": "Trades",
+  "label": "HVAC Contractor",
+  "value": "0eh3d0000000Q90AAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Liquefied Gas Supplier",
+  "value": "0eh3d0000000Q9cAAE"
+ },
+ {
+  "category": "Trades",
+  "label": "Liquefied Gas Supplier Restricted",
+  "value": "0eh3d0000000Q9WAAU"
+ },
+ {
+  "category": "Business",
+  "label": "Manicuring Establishment",
+  "value": "0eh3d000000089uAAA"
+ },
+ {
+  "category": "Business",
+  "label": "Manicuring School",
+  "value": "0eh3d00000008A6AAI"
+ },
+ {
+  "category": "Manufactured Homes",
+  "label": "Manufactured Home Communities",
+  "value": "0eh3d0000000Q8aAAE"
+ },
+ {
+  "category": "Manufactured Homes",
+  "label": "Manufactured Home Dealers",
+  "value": "0eh3d0000000Q9OAAU"
+ },
+ {
+  "category": "Manufactured Homes",
+  "label": "Manufactured Home Manufacturer",
+  "value": "0eh3d0000000Q8bAAE"
+ },
+ {
+  "category": "Health",
+  "label": "Mobile Dentistry Program",
+  "value": "0eh3d00000002wyAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Pharmacy (In-State)",
+  "value": "0eh3d00000002xcAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Pharmacy (Out-of-State)",
+  "value": "0eh3d00000002xdAAA"
+ },
+ {
+  "category": "Business",
+  "label": "Private Detective/Security Agency",
+  "value": "0eh3d000000089gAAA"
+ },
+ {
+  "category": "Unarmed Combat Sports",
+  "label": "Promoter",
+  "value": "0eh3d0000000Q8DAAU"
+ },
+ {
+  "category": "Business",
+  "label": "Real Estate Business Entity",
+  "value": "0eh3d000000089nAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Tanning Facilities",
+  "value": "0eh3d00000002xyAAA"
+ },
+ {
+  "category": "Health",
+  "label": "Tattooing and Body Piercing Establishment",
+  "value": "0eh3d00000002x7AAA"
+ },
+ {
+  "category": "Health",
+  "label": "Third-Party Logistics Provider",
+  "value": "0eh3d00000002xeAAA"
+ },
+ {
+  "category": "Business",
+  "label": "Transportation Network Company",
+  "value": "0eh3d0000000Q8BAAU"
+ },
+ {
+  "category": "Trades",
+  "label": "UDC Inspection Agency",
+  "value": "0eh3d0000000Q9UAAU"
+ },
+ {
+  "category": "Business",
+  "label": "Warehouse for Cemetery Merchandise",
+  "value": "0eh3d000000089NAAQ"
+ },
+ {
+  "category": "Health",
+  "label": "Wholesale Distributor of Prescription Drugs",
+  "value": "0eh3d00000002xfAAA"
+ }
+]
