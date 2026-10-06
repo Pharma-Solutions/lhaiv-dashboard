@@ -175,4 +175,54 @@ MD = SourceSpec(
            "Pharmacists and technicians (13,116 + 11,715) are individuals, out of scope."),
 )
 
-ALL = {s.state: s for s in (WY, GA, MD)}
+# --------------------------------------------------------------------------- SD
+# Three sheets in one workbook: FT/PT resident pharmacies (100-/200-series),
+# Nonresident pharmacies (400-series), and Wholesale/Other Distributors/503B
+# (600-series). Banner reads "Active and in Good Standing" but there is NO
+# per-row status column, so license_status is left blank, never inferred (the MD
+# pattern). Source ZIPs carry a leading backtick text-marker and the FT/PT sheet
+# ZIP header reads "1"; both are kept verbatim at intake and cleaned downstream.
+# Email provenance confirmed from the delivery message (verified@ shared mailbox).
+SD = SourceSpec(
+    state="SD", agency="sd-board-of-pharmacy", scope="Company-Only",
+    email={
+        "authority": "SD Board of Pharmacy",
+        "sender": "Beth.Windschitl@state.sd.us", "sender_name": "Windschitl, Beth",
+        "subject": ("Pharma Solutions USA dba LighthouseAI / SD BOP Data List Request "
+                    "Fulfillment (SD FT/PT Pharmacies, Nonresident & Wholesale ) 09/30/2026"),
+        "received": "2026-10-05",
+    },
+    workbooks=[
+        Workbook("SD_Data List 9.30.26.xlsx",
+                 sheets={"FT PT SD Pharmacies": "Pharmacy - Resident",
+                         "Nonresident": "Pharmacy - Nonresident",
+                         "Wholesale": "Wholesale / Distributor / 503B"},
+                 expected_rows={"FT PT SD Pharmacies": 292,
+                                "Nonresident": 1056, "Wholesale": 1352}),
+    ],
+    aliases={
+        "license_number": ["license #"], "facility_name": ["business"],
+        "business_activity": ["type of practice"],
+        "issue_date": ["issued"], "expiration_date": ["expiration"],
+        "address_line1": ["address 1"], "address_line2": ["address 2"],
+        "address_city": ["city"], "address_state": ["state"],
+        "address_zip": ["zip", "1"],
+    },
+    known_status=None,
+    notes=("Headers on row 6. No status column: left blank, never inferred. "
+           "ZIPs carry a leading backtick text-marker, kept verbatim at intake. "
+           "FT/PT ZIP header is '1'. DBA present in source but not in canonical schema. "
+           "3 Wholesale rows carry address_state 'OUTSIDE USA' (Canadian wholesalers: Jubilant "
+           "DraxImage, AX Pharmaceutical, BWXT Medical) - faithfully kept; the enricher "
+           "treats them nonresident. This is the one expected C4 verifier exception. "
+           "Delivered to the verified@lighthouseai.com shared mailbox (State License Data "
+           "Requests folder); Internet-Message-Id "
+           "<SA9PR09MB528084D6EA991E2F73443E5CB4962@SA9PR09MB5280.namprd09.prod.outlook.com>. "
+           "Sender Beth Windschitl, Senior Secretary. Board states active-license-holders "
+           "only, snapshot at time of download, reliable but not guaranteed; payment check "
+           "#3493 dated 09/29/26. The 9.30.26 in the filename is the board's snapshot date; "
+           "the delivery email was received 2026-10-05."),
+)
+
+
+ALL = {s.state: s for s in (WY, GA, MD, SD)}
