@@ -176,10 +176,18 @@ def verify(spec, baseline_dir):
     chk("C3. issue_date is ISO yyyy-mm-dd (or empty)", not baddate,
         "non-ISO=%d %s" % (len(baddate), baddate[:3]))
     st = collections.Counter(r["address_state"] for r in rows)
-    unknown = {s for s in st if s and s not in US_OK and s not in FOREIGN_OK}
-    chk("C4. address_state is US or an enricher-known foreign code", not unknown,
-        "unknown=%s foreign=%s blank=%d"
-        % (sorted(unknown), sorted({s for s in st if s in FOREIGN_OK and s not in US_OK}), st[""]))
+    documented = getattr(spec, "documented_state_literals", set())
+    unknown = {s for s in st if s and s not in US_OK and s not in FOREIGN_OK
+               and s not in documented}
+    seen_doc = sorted({s for s in st if s in documented})
+    chk("C4. address_state is US, a known foreign code, or a documented literal",
+        not unknown,
+        "unknown=%s foreign=%s documented=%s blank=%d"
+        % (sorted(unknown), sorted({s for s in st if s in FOREIGN_OK and s not in US_OK}),
+           seen_doc, st[""]))
+    # A documented literal that no longer appears is stale scaffolding - say so.
+    for lit in sorted(documented - set(st)):
+        print("      note: documented state literal %r no longer present in the data" % lit)
     if spec.known_status is not None:
         drift = {r["license_status"] for r in rows if r["license_status"]} - spec.known_status
         chk("C5. license_status within the registered enum", not drift, "drift=%s" % sorted(drift))

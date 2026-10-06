@@ -30,12 +30,17 @@ TYPE_FROM_COLUMN = "__type_from_column__"
 # does not carry is emitted empty rather than omitted, so one reader handles every
 # jurisdiction and a missing field is visibly missing instead of absent.
 CANONICAL = [
-    "facility_name", "license_number", "license_type", "license_status",
+    "facility_name", "dba", "license_number", "license_type", "license_status",
     "business_activity", "issue_date", "expiration_date",
     "address_line1", "address_line2", "address_city", "address_county",
-    "address_state", "address_zip",
+    "address_state", "address_zip", "phone", "fax",
     "jurisdiction", "__source_sheet", "__source_file", "__source_email", "__retrieved",
 ]
+# dba / phone / fax added 2026-10-06. Only SD publishes them today (DBA 40.9%, phone
+# 99.9%, fax 71.7% of its 2,700 rows) and they were being DROPPED - the one real
+# advantage the superseded per-type files had. Empty for the boards that do not supply
+# them, exactly as address_county is empty outside MD: one schema, a missing field
+# visibly missing rather than absent.
 
 
 class Workbook(object):
@@ -48,7 +53,8 @@ class Workbook(object):
 
 class SourceSpec(object):
     def __init__(self, state, agency, scope, email, workbooks, aliases,
-                 known_status=None, documented_near_dups=None, notes=""):
+                 known_status=None, documented_near_dups=None,
+                 documented_state_literals=None, notes=""):
         self.state = state
         self.agency = agency
         self.scope = scope                        # "Company-Only" | "Complete"
@@ -57,6 +63,12 @@ class SourceSpec(object):
         self.aliases = aliases                    # {canonical: [accepted header, ...]}
         self.known_status = known_status          # set, or None when the source has no status column
         self.documented_near_dups = documented_near_dups or set()
+        # Literal address_state values this board publishes that are neither a US
+        # state nor a code the enricher recognises as foreign. Kept verbatim at
+        # intake; listed here so the verifier stays a TRIPWIRE - a documented value
+        # passes, a NEW unrecognised one still fails loudly. A permanently-red
+        # check gets ignored, which is how a real one would slip through.
+        self.documented_state_literals = {s.upper() for s in (documented_state_literals or ())}
         self.notes = notes
 
     @property
@@ -207,14 +219,22 @@ SD = SourceSpec(
         "address_line1": ["address 1"], "address_line2": ["address 2"],
         "address_city": ["city"], "address_state": ["state"],
         "address_zip": ["zip", "1"],
+        "dba": ["dba"], "phone": ["phone"], "fax": ["fax"],
     },
     known_status=None,
+    # Source spells it "Outside USA" (mixed case); the adapter upper-cases every
+    # address_state. Verified present in the Wholesale sheet, column "State", on
+    # exactly these three Canadian wholesalers - the same three that appear as
+    # ON/QC in WY and as blank in GA.
+    documented_state_literals=("OUTSIDE USA",),
     notes=("Headers on row 6. No status column: left blank, never inferred. "
            "ZIPs carry a leading backtick text-marker, kept verbatim at intake. "
-           "FT/PT ZIP header is '1'. DBA present in source but not in canonical schema. "
+           "FT/PT ZIP header is '1'. DBA/Phone/Fax entered the canonical schema 2026-10-06; 5 DBA cells hold the literal 'N/A' and are kept VERBATIM (the superseded per-type files blanked them, which is interpretation, not transcription). "
            "3 Wholesale rows carry address_state 'OUTSIDE USA' (Canadian wholesalers: Jubilant "
-           "DraxImage, AX Pharmaceutical, BWXT Medical) - faithfully kept; the enricher "
-           "treats them nonresident. This is the one expected C4 verifier exception. "
+           "DraxImage, AX Pharmaceutical, BWXT Medical) - faithfully kept. As of 2026-10-06 "
+           "verified_enrich recognises the literal via FOREIGN_STATE_LITERALS, so these 3 "
+           "rows enrich to Nonresident / basis 'foreign address' and SD has 0 Unknown "
+           "- verified after the change, not assumed. "
            "Delivered to the verified@lighthouseai.com shared mailbox (State License Data "
            "Requests folder); Internet-Message-Id "
            "<SA9PR09MB528084D6EA991E2F73443E5CB4962@SA9PR09MB5280.namprd09.prod.outlook.com>. "

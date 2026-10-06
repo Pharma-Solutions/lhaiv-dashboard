@@ -146,6 +146,7 @@ class Intake(object):
                 self.log("   !! unmapped status %r in %s (kept verbatim)" % (status, label))
             rows.append({
                 "facility_name":    txt(g("facility_name")),
+                "dba":              txt(g("dba")),
                 "license_number":   lic,
                 "license_type":     txt(g("license_type")) if lic_type is ES.TYPE_FROM_COLUMN else lic_type,
                 "license_status":   status,
@@ -158,6 +159,8 @@ class Intake(object):
                 "address_county":   txt(g("address_county")),
                 "address_state":    txt(g("address_state")).upper(),
                 "address_zip":      self.norm_zip(g("address_zip")),
+                "phone":            txt(g("phone")),
+                "fax":              txt(g("fax")),
                 "jurisdiction":     self.spec.state,
                 "__source_sheet":   ws.title,
                 "__source_file":    src_file,

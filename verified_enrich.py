@@ -202,6 +202,17 @@ FOREIGN_TOKENS = re.compile(
 CA_POSTAL = re.compile(r"\b[A-Z]\d[A-Z]\s?\d[A-Z]\d\b", re.I)
 UK_POSTAL = re.compile(r"\b[A-Z]{1,2}\d[A-Z\d]?\s+\d[A-Z]{2}\b", re.I)
 
+# Some boards publish a LITERAL in the state field instead of a code. SD's Wholesale
+# sheet uses "Outside USA" for its three Canadian registrants (Jubilant DraxImage, AX
+# Pharmaceutical, BWXT Medical). Checked against the STATE FIELD ONLY - never against
+# address text - so a street or business name can never trip it. Add a value here only
+# when it has actually been OBSERVED in a board's data; guessing variants would widen
+# the match on no evidence. The US_STATES/STATE_NAMES guard is applied first, exactly
+# as for FOREIGN_CODES, so a genuine US state can never be read as foreign.
+FOREIGN_STATE_LITERALS = {
+    "OUTSIDE USA",          # observed: SD Board of Pharmacy, Wholesale sheet, 2026-09-30
+}
+
 def looks_foreign(addr, raw_state=""):
     """True when the row is plainly outside the US.
 
@@ -211,6 +222,8 @@ def looks_foreign(addr, raw_state=""):
     a = str(addr or "")
     rs = re.sub(r"\s+", " ", str(raw_state or "").strip().upper())
     if rs and rs not in US_STATES and rs not in STATE_NAMES and rs in FOREIGN_CODES:
+        return True
+    if rs and rs not in US_STATES and rs not in STATE_NAMES and rs in FOREIGN_STATE_LITERALS:
         return True
     if FOREIGN_TOKENS.search(a) or FOREIGN_TOKENS.search(rs):
         return True
