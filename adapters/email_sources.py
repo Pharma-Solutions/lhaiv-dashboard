@@ -34,6 +34,7 @@ CANONICAL = [
     "business_activity", "issue_date", "expiration_date",
     "address_line1", "address_line2", "address_city", "address_county",
     "address_state", "address_zip", "phone", "fax",
+    "credential_type_prefix", "attention_line",
     "jurisdiction", "__source_sheet", "__source_file", "__source_email", "__retrieved",
 ]
 # dba / phone / fax added 2026-10-06. Only SD publishes them today (DBA 40.9%, phone
@@ -52,13 +53,33 @@ class Workbook(object):
 
 
 class SourceSpec(object):
-    def __init__(self, state, agency, scope, email, workbooks, aliases,
+    def __init__(self, state, agency, scope, workbooks=None, aliases=None, email=None,
                  known_status=None, documented_near_dups=None,
-                 documented_state_literals=None, notes=""):
+                 documented_state_literals=None, known_types=None,
+                 allow_blank_license=False, allow_blank_name=False,
+                 output_subdir=None, acquisition=None, notes=""):
         self.state = state
         self.agency = agency
         self.scope = scope                        # "Company-Only" | "Complete"
+        # Exactly one of email / acquisition. `email` = the board sent it and we have a
+        # named sender, subject and receipt date. `acquisition` = the file reached us some
+        # other way (a manual drop) and those fields DO NOT EXIST - they are left absent
+        # rather than guessed, so a reader can tell "not recorded" from "recorded as X".
+        assert (email is None) != (acquisition is None),             "%s: give exactly one of email= or acquisition=" % state
         self.email = email
+        self.acquisition = acquisition
+        # Observed license_type values. Drift is FLAGGED and the row is kept verbatim -
+        # a new type is news, not an error, and must never be silently dropped or
+        # mapped onto the nearest known value.
+        self.known_types = set(known_types or ())
+        # Some boards publish rows with no credential number or no business name. They
+        # are real records and are KEPT and COUNTED; dropping them would quietly shrink
+        # the roster. Opt-in per source so a blank stays an error everywhere else.
+        self.allow_blank_license = allow_blank_license
+        self.allow_blank_name = allow_blank_name
+        # Where the canonical CSV lands, relative to data/<ST>/. None = _incoming.
+        self.output_subdir = output_subdir
+        assert workbooks and aliases, "%s: workbooks and aliases are required" % state
         self.workbooks = workbooks
         self.aliases = aliases                    # {canonical: [accepted header, ...]}
         self.known_status = known_status          # set, or None when the source has no status column
@@ -79,9 +100,23 @@ class SourceSpec(object):
         return "%s - %s - %s - %s.csv" % (self.state, self.agency, self.scope, datestamp)
 
     def source_string(self):
-        e = self.email
-        return ("%s - received by email %s from %s <%s>, subject %r"
-                % (e["authority"], e["received"], e["sender_name"], e["sender"], e["subject"]))
+        if self.email:
+            e = self.email
+            return ("%s - received by email %s from %s <%s>, subject %r"
+                    % (e["authority"], e["received"], e["sender_name"], e["sender"], e["subject"]))
+        a = self.acquisition
+        return ("%s - %s, acquired %s, delivered to %s (sender and received date NOT "
+                "RECORDED - pending chain-of-custody confirmation)"
+                % (a["authority"], a["acquired_via"], a["acquired_date"], a["delivery_email"]))
+
+    @property
+    def retrieved(self):
+        return (self.email or self.acquisition).get(
+            "received", (self.acquisition or {}).get("acquired_date", ""))
+
+    def out_dir(self, data_root):
+        import os
+        return os.path.join(data_root, self.state, self.output_subdir or "_incoming")
 
 
 # --------------------------------------------------------------------------- WY
@@ -244,5 +279,130 @@ SD = SourceSpec(
            "the delivery email was received 2026-10-05."),
 )
 
+# --------------------------------------------------------------------------- OR
+# Oregon Board of Pharmacy facility license rosters, purchased via the board's
+# List Order Form ($80/category x 4). FOUR category workbooks, one sheet each; the
+# sheet is always "Active <category>" so license_status is uniformly "Active".
+# License Type is a per-row column kept VERBATIM (TYPE_FROM_COLUMN) - Retail/
+# Institutional/Home Dialysis/Charitable/Remote Dispensing drug outlets, Manufacturer,
+# Wholesaler (Prescription/Class III/Nonprescription), Drug Distribution Agent. Lists
+# include out-of-state (non-resident) registrants, so address_state spans ~50 states.
+# Zips arrive as TEXT already zero-padded; dates are real datetimes.
+OR = SourceSpec(
+    state="OR", agency="or-board-of-pharmacy", scope="Company-Only",
+    email={
+        "authority": "OR Board of Pharmacy",
+        "sender": "PHARMACY.PUBLICRECORDS@bop.oregon.gov",
+        "sender_name": "PHARMACY PUBLIC RECORDS * BOP",
+        "subject": "2026.10.06 Lists Request - LighthouseAI",
+        "received": "2026-10-06",
+    },
+    workbooks=[
+        Workbook("2026.10.05 List Request LighthouseAI (Pharmacies).xlsx",
+                 sheets=TYPE_FROM_COLUMN,
+                 expected_rows={"Active Pharmacies with License ": 1697}),
+        Workbook("2026.10.05 List Request LighthouseAI (Manufacturers).xlsx",
+                 sheets=TYPE_FROM_COLUMN,
+                 expected_rows={"Active Manufacturers with Licen": 1515}),
+        Workbook("2026.10.05 List Request LighthouseAI (Wholesalers).xlsx",
+                 sheets=TYPE_FROM_COLUMN,
+                 expected_rows={"Active Wholesalers with License": 891}),
+        Workbook("2026.10.05 List Request LighthouseAI (Drug Distribution Agents).xlsx",
+                 sheets=TYPE_FROM_COLUMN,
+                 expected_rows={"Active Drug Distribution Agent ": 505}),
+    ],
+    aliases={
+        "license_number": ["license number"], "license_type": ["license type"],
+        "license_status": ["license status"], "facility_name": ["sort name"],
+        "issue_date": ["issue date"], "expiration_date": ["expiration date"],
+        "address_line1": ["address line 1"], "address_line2": ["address line 2"],
+        "address_city": ["city"], "address_state": ["state"], "address_zip": ["zip"],
+    },
+    known_status={"Active"},
+    notes=("Four category workbooks (one sheet each), purchased via the OBOP List Order "
+           "Form at $80/category (wholesalers, manufacturers, drug distribution agents, "
+           "retail drug outlets). license_type kept verbatim from the column. Lists "
+           "include out-of-state (non-resident) registrants, so address_state spans ~50 "
+           "states and the enricher treats non-OR rows as nonresident. Zips arrive as text, "
+           "already zero-padded (no reconstruction expected); a few issue_date / zip cells "
+           "are blank in-source and kept empty. Delivered to the verified@lighthouseai.com "
+           "shared mailbox (State License Data Requests). Files board-named 2026.10.05; the "
+           "delivery email ('2026.10.06 Lists Request - LighthouseAI') was received 2026-10-06."),
+)
 
-ALL = {s.state: s for s in (WY, GA, MD, SD)}
+
+# --------------------------------------------------------------------------- SC
+# A MANUAL FILE DROP, not an email delivery - acquisition= rather than email=, so the
+# sender and received date are absent rather than invented. Mark to supply them for
+# chain of custody. Structurally this follows OR: single board, TYPE_FROM_COLUMN.
+SC = SourceSpec(
+    state="SC", agency="sc-board-of-pharmacy", scope="Company-Only",
+    output_subdir="sc-board-of-pharmacy",
+    acquisition={
+        "authority": "SC Board of Pharmacy",
+        "acquired_via": "manual file drop by Mark",
+        "acquired_date": "2026-10-06",
+        "delivery_email": "verified@lighthouseai.com",
+        "sender": None,        # NOT RECORDED - do not guess
+        "received": None,      # NOT RECORDED - do not guess
+    },
+    workbooks=[
+        Workbook("SC_Pharmacies All 10.6.2026.xlsx",
+                 sheets=TYPE_FROM_COLUMN,
+                 expected_rows={"ContactsByBoard": 19123}),
+    ],
+    aliases={
+        "license_number": ["credential number"],
+        "license_type": ["license description"],
+        "license_status": ["status"],
+        "facility_name": ["business name"],
+        "issue_date": ["issuance date"], "expiration_date": ["expiration date"],
+        "address_line1": ["address1"], "address_line2": ["address2"],
+        "address_city": ["city"], "address_state": ["state code"],
+        "address_zip": ["zipcode"], "phone": ["business phone"],
+        "credential_type_prefix": ["credential type prefix"],
+        # "company" is NOT an alternate business name. Of the 449 rows where it is
+        # populated, 436 differ from Business Name and carry an attention / care-of
+        # line: "ATTN: MEDICAL", "PHARMACY DEPT", "c/o SHIPPER'S WAREHOUSE". Using it
+        # as a facility_name fallback would inject those into name matching - and it
+        # would rescue nothing: all 10 blank-Business-Name rows have company empty.
+        "attention_line": ["company"],
+    },
+    known_status={
+        "ACTIVE", "ACTIVE IN RENEWAL", "APPROVED", "CANCELED", "CEASE AND DESIST",
+        "CLOSED", "DENIED", "INACTIVE", "LAPSED", "PENDING", "PERMANENTLY REVOKED",
+        "RELINQUISHED", "REVOKED", "SUSPENDED", "VOLUNTARY SURRENDERED", "WITHDRAWN",
+    },
+    known_types={
+        "Non-Resident Wholesale/Distributor", "Pharmacy", "Non-Dispensing Drug Outlet",
+        "Non-Resident Pharmacy", "Non-Resident Medical Gas/DME",
+        "EMS Non-dispensing Drug Outlet", "Medical Gas/Legend Device",
+        "Non-Resident Third Party Logistics Provider",
+        "Non Resident Manufacturer/Repackager", "Non-Resident Virtual Manufacturer",
+        "Wholesale/Distributor", "Non-Resident Outsourcing Facility",
+        "Non-resident Non-Dispensing Pharmacy", "Manufacturer/Repackager",
+        "Non-Resident Virtual Wholesale", "Narcotic Treatment Program",
+        "Health System Non-Dispensing Permit", "Outsourcing Facility",
+        "Third Party Logistics Provider",
+        "Non-Resident Central Fill Pharmacy Permit Application",
+        "In-State Central Fill Pharmacy", "Narcotic Treatment Program Satellite",
+    },
+    # 4 rows have no Credential Number and 10 no Business Name. Real records; dropping
+    # them would quietly shrink the roster, so they are kept and counted.
+    allow_blank_license=True, allow_blank_name=True,
+    # "NA" is not a place - SC uses it for two foreign rows (Cencora Global Procurement
+    # in Cork, Ireland; Jubilant DraxImage in Kirkland, Quebec). Too ambiguous to make a
+    # global foreign rule, so it is documented HERE and residency is decided from the
+    # address. "PQ" needed no entry: it is pre-1991 Quebec and was added to the
+    # enricher's FOREIGN_CODES, where it belongs.
+    documented_state_literals=("NA",),
+    notes=("Single sheet 'ContactsByBoard'; Board column constant 'PHARMACY'. "
+           "license_type is per-row from 'License Description', NOT collapsed or "
+           "canonicalised - that is downstream. Status is preserved RAW and intake does "
+           "NOT filter on it: all 19,123 rows land, disciplinary tail included. "
+           "'Credential Type Prefix' (e.g. PY) is preserved separately and never folded "
+           "into license_number."),
+)
+
+
+ALL = {s.state: s for s in (WY, GA, MD, SD, OR, SC)}

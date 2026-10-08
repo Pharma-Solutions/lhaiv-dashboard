@@ -78,10 +78,24 @@ class Intake(object):
             return ""
         if isinstance(v, (dt.datetime, dt.date)):
             return v.strftime("%Y-%m-%d")
+        # Some boards export dates as TEXT (SC ships all 38,246 cells as "M/D/YYYY"
+        # strings). Convert only that exact shape, and only when it is a real calendar
+        # date with month <= 12 - a value whose first component exceeds 12 is ambiguous
+        # between M/D and D/M, so it is kept verbatim and flagged rather than guessed.
+        txt_v = str(v).strip()
+        m = re.fullmatch(r"(\d{1,2})/(\d{1,2})/(\d{4})", txt_v)
+        if m:
+            mo, d, y = int(m.group(1)), int(m.group(2)), int(m.group(3))
+            try:
+                iso = dt.date(y, mo, d).strftime("%Y-%m-%d")
+                self.stats["date_text_parsed"] += 1
+                return iso
+            except ValueError:
+                pass                      # not a real date - fall through, keep verbatim
         self.stats["date_not_datetime"] += 1
         if self.stats["date_not_datetime"] <= 5:
-            self.log("   !! non-datetime date in %s: %r (kept verbatim)" % (where, v))
-        return str(v).strip()
+            self.log("   !! unparseable date in %s: %r (kept verbatim)" % (where, v))
+        return txt_v
 
     def norm_zip(self, v):
         if v is None:
@@ -137,9 +151,20 @@ class Intake(object):
                 i = ix.get(c)
                 return r[i] if (i is not None and i < len(r)) else None
 
+            if not any(v not in (None, "") for v in r):
+                continue                                  # genuinely empty row
             lic = txt(g("license_number"))
-            if not lic:
+            if not lic and not self.spec.allow_blank_license:
                 continue                                  # trailing blank rows
+            if not lic:
+                self.stats["blank_license_kept"] += 1
+            if not txt(g("facility_name")) and self.spec.allow_blank_name:
+                self.stats["blank_name_kept"] += 1
+            lt_val = (txt(g("license_type")) if lic_type is ES.TYPE_FROM_COLUMN else lic_type)
+            if self.spec.known_types and lt_val and lt_val not in self.spec.known_types:
+                self.stats["type_drift"] += 1
+                if self.stats["type_drift"] <= 10:
+                    self.log("   !! license_type outside the observed set: %r (kept)" % lt_val)
             status = txt(g("license_status"))
             if self.spec.known_status is not None and status and status not in self.spec.known_status:
                 self.stats["status_drift"] += 1
@@ -148,7 +173,7 @@ class Intake(object):
                 "facility_name":    txt(g("facility_name")),
                 "dba":              txt(g("dba")),
                 "license_number":   lic,
-                "license_type":     txt(g("license_type")) if lic_type is ES.TYPE_FROM_COLUMN else lic_type,
+                "license_type":     lt_val,
                 "license_status":   status,
                 "business_activity": txt(g("business_activity")),
                 "issue_date":       self.norm_date(g("issue_date"), label),
@@ -161,11 +186,13 @@ class Intake(object):
                 "address_zip":      self.norm_zip(g("address_zip")),
                 "phone":            txt(g("phone")),
                 "fax":              txt(g("fax")),
+                "credential_type_prefix": txt(g("credential_type_prefix")),
+                "attention_line":   txt(g("attention_line")),
                 "jurisdiction":     self.spec.state,
                 "__source_sheet":   ws.title,
                 "__source_file":    src_file,
                 "__source_email":   self.spec.source_string(),
-                "__retrieved":      self.spec.email["received"],
+                "__retrieved":      self.spec.retrieved,
             })
         return rows
 
@@ -246,7 +273,8 @@ class Intake(object):
 
         prov = {
             "state": sp.state, "agency": sp.agency, "scope": sp.scope,
-            "email": sp.email, "source_files": self.files,
+            "email": sp.email, "acquisition": sp.acquisition,
+            "source_files": self.files,
             "output": os.path.basename(out), "output_sha256": sha256(out),
             "rows": len(frames),
             "distinct_license_numbers": len({r["license_number"] for r in frames}),
@@ -268,6 +296,7 @@ class Intake(object):
         self.log("  status        : %s" % (prov["by_status"] if sp.known_status is not None
                                            else "(source carries no status column)"))
         self.log("  zip padded    : %d" % self.stats["zip_zero_padded"])
+        self.log("  text dates parsed: %d (M/D/YYYY -> ISO)" % self.stats["date_text_parsed"])
         self.log("  date anomalies: %d" % self.stats["date_not_datetime"])
         self.log("  status drift  : %d" % self.stats["status_drift"])
         self.log("  count deltas  : %d" % self.stats["count_delta"])
@@ -284,6 +313,9 @@ def main():
     ap.add_argument("states", nargs="*", help="e.g. WY GA MD")
     ap.add_argument("--all", action="store_true")
     ap.add_argument("--date", default=dt.date.today().strftime("%Y%m%d"))
+    ap.add_argument("--out", default=None,
+                    help="override the output directory; default is the spec's "
+                         "output_subdir under data/<ST>/, else _incoming")
     a = ap.parse_args()
     keys = sorted(ES.ALL) if a.all or not a.states else [s.upper() for s in a.states]
     unknown = [k for k in keys if k not in ES.ALL]
@@ -294,7 +326,12 @@ def main():
         print(m, flush=True)
 
     for k in keys:
-        Intake(ES.ALL[k], log).run(incoming_dir(k), a.date)
+        sp = ES.ALL[k]
+        out = a.out or sp.out_dir(DATA)
+        if not os.path.isdir(out):
+            os.makedirs(out)
+            log('  created %s' % out)
+        Intake(sp, log).run(out, a.date)
 
 
 if __name__ == "__main__":

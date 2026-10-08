@@ -41,7 +41,7 @@ def sha256(path):
 
 def collect():
     out = []
-    for p in sorted(glob.glob(os.path.join(DATA, "*", "_incoming", "*.provenance.json"))):
+    for p in sorted(glob.glob(os.path.join(DATA, "*", "*", "*.provenance.json"))):
         try:
             out.append((p, json.load(open(p, encoding="utf-8"))))
         except Exception as e:
@@ -60,15 +60,25 @@ def main():
     print("=" * 76)
     for path, prov in collect():
         d = os.path.dirname(path)
-        e = prov["email"]
+        e = prov.get("email")
+        acq = prov.get("acquisition")
         print()
         print("%s  %s   %s rows" % (prov["state"], prov["agency"], format(prov["rows"], ",")))
-        print("   from   %s <%s>" % (e["sender_name"], e["sender"]))
-        print("   subject %r   received %s" % (e["subject"], e["received"]))
+        if e:
+            print("   from   %s <%s>" % (e["sender_name"], e["sender"]))
+            print("   subject %r   received %s" % (e["subject"], e["received"]))
+        elif acq:
+            print("   via    %s   acquired %s" % (acq["acquired_via"], acq["acquired_date"]))
+            print("   mailbox %s   sender/received NOT RECORDED - pending confirmation"
+                  % acq["delivery_email"])
+        else:
+            print("   !! no email or acquisition block in this provenance file")
 
         files = []
         for f in prov["source_files"]:
-            fp = os.path.join(d, f["file"])
+            # Source workbooks always live in data/<ST>/_incoming, even when the
+            # canonical output lands in an agency folder beside it (SC).
+            fp = os.path.join(DATA, prov["state"], "_incoming", f["file"])
             if not os.path.exists(fp):
                 print("   !! MISSING source workbook: %s" % f["file"])
                 drift += 1
@@ -94,7 +104,7 @@ def main():
 
         entries.append({
             "state": prov["state"], "agency": prov["agency"], "scope": prov["scope"],
-            "email": e, "rows": prov["rows"],
+            "email": e, "acquisition": acq, "rows": prov["rows"],
             "distinct_license_numbers": prov.get("distinct_license_numbers"),
             "by_type": prov.get("by_type", {}), "stats": prov.get("stats", {}),
             "source_files": files,

@@ -61,9 +61,12 @@ def load_csv(p):
         return list(csv.DictReader(f))
 
 
-def newest_output(state, agency):
-    d = os.path.join(DATA, state, "_incoming")
-    pat = "%s - %s - " % (state, agency)
+def newest_output(state, agency, spec=None):
+    d = spec.out_dir(DATA) if spec is not None else os.path.join(DATA, state, "_incoming")
+    # Match the SCOPE too. Matching the prefix alone picked up side files that sort
+    # after the canonical one - "DISCIPLINARY" beats "Company-Only" - and the verifier
+    # then checked the wrong file. Same trap as the _enriched twin below.
+    pat = "%s - %s - %s - " % (state, agency, spec.scope if spec is not None else "")
     c = sorted(f for f in os.listdir(d)
                if f.startswith(pat) and f.endswith(".csv") and "_enriched" not in f)
     if not c:
@@ -101,7 +104,7 @@ def verify(spec, baseline_dir):
     print("=" * 80)
     print("%s  -  %s" % (spec.state, spec.agency))
     print("=" * 80)
-    out = newest_output(spec.state, spec.agency)
+    out = newest_output(spec.state, spec.agency, spec)
     rows = load_csv(out)
     print("  output: %s   rows=%d" % (os.path.basename(out), len(rows)))
 
@@ -120,9 +123,15 @@ def verify(spec, baseline_dir):
             hdr, raw = raw_sheet(path, sheet)
             for r in raw:
                 v = r.get(lic_hdr)
-                if v in (None, ""):
+                # A blank licence number is a real row where the source declares it
+                # (SC has 4). Skipping them here would make the output look like it had
+                # invented rows. A fully-empty row is still skipped, as the engine does.
+                if v in (None, "") and not getattr(spec, "allow_blank_license", False):
                     continue
-                base = (wbspec.filename, sheet, str(v).strip())
+                if all(x in (None, "") for x in r.values()):
+                    continue
+                # match the engine's txt(): None becomes "", not the string "None"
+                base = (wbspec.filename, sheet, "" if v is None else str(v).strip())
                 occ[base] += 1
                 src_rows[base + (occ[base] - 1,)] = r
     out_rows, oocc = {}, collections.Counter()
@@ -167,8 +176,14 @@ def verify(spec, baseline_dir):
         chk("B3. untouched zips byte-identical to source", not kept, "changed=%d" % kept)
 
     # ---- C. structural invariants
-    chk("C1. no blank license_number or facility_name",
-        all(r["license_number"] and r["facility_name"] for r in rows))
+    blank_lic = sum(1 for r in rows if not r["license_number"])
+    blank_nm = sum(1 for r in rows if not r["facility_name"])
+    allow_l = getattr(spec, "allow_blank_license", False)
+    allow_n = getattr(spec, "allow_blank_name", False)
+    chk("C1. blank license_number / facility_name only where the source declares them",
+        (blank_lic == 0 or allow_l) and (blank_nm == 0 or allow_n),
+        "blank licence=%d (allowed=%s)  blank name=%d (allowed=%s)"
+        % (blank_lic, allow_l, blank_nm, allow_n))
     chk("C2. jurisdiction constant %r" % spec.state,
         {r["jurisdiction"] for r in rows} == {spec.state})
     baddate = [r["license_number"] for r in rows
@@ -195,6 +210,12 @@ def verify(spec, baseline_dir):
         chk("C5. license_status left blank (source has no status column)",
             not any(r["license_status"] for r in rows),
             "source carries no status; nothing inferred")
+
+    kt = getattr(spec, "known_types", set())
+    if kt:
+        seen_t = {r["license_type"] for r in rows if r["license_type"]}
+        chk("C6. license_type within the registered enum", not (seen_t - kt),
+            "types=%d  drift=%s" % (len(seen_t), sorted(seen_t - kt)))
 
     # ---- D. duplicates
     within = collections.Counter((r["license_number"], r["license_type"]) for r in rows)

@@ -190,7 +190,7 @@ def state_from_addr(addr):   # used by the NPI query
 # genuinely US states (DE Delaware, IN Indiana, LA, MS, OK, OR, PA, VA...) can never be
 # mistaken for foreign ones even though they collide with country abbreviations.
 FOREIGN_CODES = {
-    "AB","BC","MB","NB","NL","NS","NT","NU","ON","PE","QC","SK","YT",   # Canada
+    "AB","BC","MB","NB","NL","NS","NT","NU","ON","PE","QC","PQ","SK","YT",   # Canada (PQ = pre-1991 Quebec)
     "UK","GB","IE","IT","FR","ES","BE","CH","SE","NO","DK","FI","AT","PT","GR",
     "PL","CZ","AU","NZ","JP","CN","KR","MX","BR","ZA","IL","SG","HK","TW",
 }
