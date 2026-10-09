@@ -28,7 +28,7 @@ NOTES
   - --jurisdiction is the 2-letter code of the ISSUING board (e.g. KY), used to decide resident vs
     nonresident when the license type carries no explicit marker (facility in-state = resident).
 """
-import argparse, sys, time, re, json
+import argparse, sys, time, re, json, collections
 import pandas as pd
 
 # Windows consoles default to cp1252, which cannot encode characters like the
@@ -49,6 +49,8 @@ TYPE_COLS  = ["license type","registration_type","licensetype","license_type","l
 # location, so it must never be read as the residency state — pick_state_col drops it below.
 STATE_COLS = ["physical state","physical_state","phys state","physicalstate","state","phys_state","facilitystate","mail state","mailstate","mailing state","addr state","ba_state","st"]
 CITY_COLS  = ["physical city","physicalcity","phys city","city","phys_city","facilitycity","mail city","mailing city","addr city","ba_city"]
+STATUS_COLS= ["license_status","license status","licensestatus","status",
+              "credential status","facility status","facilty status","les_status"]
 ZIP_COLS   = ["physical zip","physicalzip","phys zip","zip","zipcode","zip code","postal","phys_zip","facilityzip","mail zip","mailing zip","ba_zip","mailzipcode"]
 ADDR_COLS  = ["physical street","physical address","address 1","address1","address","street","phys_address1","facilityaddress","mail street","mailing address 1","mailing_address","addr 1","ba_address","adress"]
 
@@ -307,10 +309,60 @@ def derive_resnon(df, type_col, state_col, addr_col, jurisdiction):
 
 # ---- NPI via NPPES ---------------------------------------------------------
 PHARMACY_HINT = re.compile(r"PHARMAC|DRUG (STORE|OUTLET)|APOTHECARY", re.I)
+
+# ---- NPI SCOPE (2026-10-09) -------------------------------------------------
+# PHARMACY_HINT alone is a NAME test standing in for a CAPABILITY question: "will
+# NPPES hold a dispensing record for this entity?" Boards name licences for
+# licensing reasons, not clinical ones, so the bare test sweeps in entities that
+# have no dispensing NPI to find - GA's "Wholesaler Pharmacy" (4.5% match over
+# 1,916 rows), SC's "EMS Non-dispensing Drug Outlet" (3.1% over 780).
+#
+# SUPPLY_CHAIN_ROLE is tested against the LICENCE TYPE ONLY, never the business
+# name: a shop called "Wholesale Drug Pharmacy" still dispenses, while the board
+# calling something a Distributor is the board's own classification and is the
+# fact we should trust. Measured across all six registered sources, excluding
+# these drops 4,844 of 26,934 lookups (18%) and costs 267 of 12,416 matches (2.2%).
+SUPPLY_CHAIN_ROLE = re.compile(
+    r"WHOLESAL|DISTRIBUT|MANUFACTUR|REPACKAG|LOGISTIC|\b3PL\b|OUTSOURCING|VIRTUAL|"
+    r"MEDICAL GAS|LEGEND DEVICE|DURABLE MEDICAL|\bDME\b|CHEMICAL|\bPBM\b|"
+    r"REMOTE AUTOMATED|\bEMS\b", re.I)
+
+# A credential that is not current. NOTE THE COST, measured not assumed: excluding
+# these drops a further 8,168 lookups but loses 2,443 matches (19.7%) - an NPI is a
+# FEDERAL identifier and routinely outlives the state licence, so a CLOSED pharmacy
+# often still has a valid one. Default on per the 2026-10-09 decision; turn it off
+# with --npi-include-inactive when recall matters more than a meaningful match rate.
+# A BLANK status is unknown, not inactive (MD and SD ship no status column at all),
+# so blank never excludes.
+NON_CURRENT_STATUS = re.compile(
+    r"CLOSED|LAPSED|EXPIRED|REVOKED|SURRENDER|RELINQUISH|CANCEL|WITHDRAWN|DENIED|"
+    r"INACTIVE|SUSPEND|CEASE", re.I)
 RETAIL_TAXONOMY = "3336C0003X"  # Community/Retail Pharmacy
 NPPES_URL = "https://npiregistry.cms.hhs.gov/api/"
+# Consecutive failed lookups that mean "the service is refusing, stop" rather
+# than "this one row did not resolve". 25 is comfortably past any plausible
+# run of genuine one-off errors.
+NPI_ABORT_STREAK = 25
+NL = chr(10)
+
+def npi_scope(type_val, name_val, status_val="", skip_inactive=True):
+    """Should NPPES be asked about this row? Returns (attempt, reason).
+
+    Order matters: the licence TYPE is the board's own classification and settles
+    the question before the business name gets a vote."""
+    t, n = str(type_val or ""), str(name_val or "")
+    st = str(status_val or "").strip()
+    if SUPPLY_CHAIN_ROLE.search(t):
+        return False, "supply-chain role (no dispensing NPI expected)"
+    if skip_inactive and st and NON_CURRENT_STATUS.search(st):
+        return False, "licence not current (%s)" % st
+    if PHARMACY_HINT.search(t) or PHARMACY_HINT.search(n):
+        return True, ""
+    return False, "not a pharmacy (no NPI expected)"
+
 
 def looks_pharmacy(type_val, name_val):
+    """Back-compat shim: the old name/type-only test, no scope gating."""
     return bool(PHARMACY_HINT.search(str(type_val)) or PHARMACY_HINT.search(str(name_val)))
 
 def norm_name(n):
@@ -355,13 +407,22 @@ def nppes_lookup(session, name, city, state, zipc):
         params = {"version":"2.1","enumeration_type":"NPI-2","organization_name":orgname,"limit":"200"}
         if state: params["state"] = state
         try:
-            return session.get(NPPES_URL, params=params, timeout=25).json().get("results") or []
-        except Exception:
+            resp = session.get(NPPES_URL, params=params, timeout=25)
+            if resp.status_code != 200:
+                # 429 / 403 / 5xx are the ones that matter - a bare "lookup error"
+                # hid a sustained refusal behind the same word as a JSON hiccup.
+                query.last_error = "HTTP %d" % resp.status_code
+                return None
+            return resp.json().get("results") or []
+        except Exception as e:
+            query.last_error = type(e).__name__
             return None
     nm = norm_name(name)
     if not nm: return "", "no usable name"
+    query.last_error = ""
     res = query(nm + "*")
-    if res is None: return "", "lookup error"
+    if res is None:
+        return "", "lookup error (%s)" % (getattr(query, "last_error", "") or "unknown")
     npi, why = _match(res, city, zipc)
     if npi: return npi, why
     toks = nm.split()
@@ -380,6 +441,11 @@ def main():
     ap.add_argument("--jurisdiction", default="", help="2-letter issuing-board state code, e.g. KY")
     ap.add_argument("--npi", dest="npi", action="store_true", help="attempt NPI enrichment (pharmacies only)")
     ap.add_argument("--no-npi", dest="npi", action="store_false")
+    ap.add_argument("--npi-include-inactive", action="store_true",
+                    help="also look up rows whose licence is CLOSED/LAPSED/REVOKED. "
+                         "An NPI is federal and outlives a state licence, so this "
+                         "recovers real matches (measured: 2,443 across the six "
+                         "registered sources) at the cost of a meaningful match rate.")
     ap.add_argument("--sample", type=int, default=0, help="only process a random N-row sample and report match rate")
     ap.add_argument("--throttle", type=float, default=0.15, help="seconds between NPPES calls")
     ap.set_defaults(npi=False)
@@ -407,8 +473,9 @@ def main():
         name_col  = pick(cols, NAME_COLS)
         city_col  = pick(cols, CITY_COLS)
         zip_col   = pick(cols, ZIP_COLS)
+        status_col = pick(cols, STATUS_COLS)
         addr_col  = pick(cols, ADDR_COLS)
-        print(f"\n[{path}]  rows={len(df)}  name={name_col} type={type_col} state={state_col} addr={addr_col} city={city_col} zip={zip_col}")
+        print(f"\n[{path}]  rows={len(df)}  name={name_col} type={type_col} state={state_col} addr={addr_col} city={city_col} zip={zip_col} status={status_col}")
 
         rn, basis = derive_resnon(df, type_col, state_col, addr_col, a.jurisdiction)
         df["resident_nonresident"] = rn
@@ -425,9 +492,16 @@ def main():
             work = df.sample(min(a.sample, len(df)), random_state=1) if a.sample else df
             npi_vals, npi_basis = {}, {}
             attempted = matched = 0
+            skipped = collections.Counter()
+            consec_err = 0
             for idx, row in work.iterrows():
-                if not looks_pharmacy(row.get(type_col,""), row.get(name_col,"")):
-                    npi_vals[idx]=""; npi_basis[idx]="not a pharmacy (no NPI expected)"; continue
+                ok, why_skip = npi_scope(row.get(type_col,""), row.get(name_col,""),
+                                         row.get(status_col,"") if status_col else "",
+                                         skip_inactive=not a.npi_include_inactive)
+                if not ok:
+                    npi_vals[idx]=""; npi_basis[idx]=why_skip
+                    skipped[why_skip.split(" (")[0]] += 1
+                    continue
                 attempted += 1
                 qstate = normalize_state(row.get(state_col,"")) if state_col else ""
                 if not qstate and addr_col: qstate = state_from_addr(row.get(addr_col,""))
@@ -435,10 +509,25 @@ def main():
                                         qstate, row.get(zip_col,""))
                 npi_vals[idx]=npi; npi_basis[idx]=why
                 if npi: matched += 1
+                if why.startswith("lookup error"):
+                    consec_err += 1
+                    if consec_err >= NPI_ABORT_STREAK:
+                        raise SystemExit(NL.join([
+                            "",
+                            "  FATAL: %d consecutive NPPES lookup failures (last: %s)."
+                            % (consec_err, why),
+                            "  Aborting BEFORE writing - the previous _enriched file is",
+                            "  left intact rather than overwritten with empty results.",
+                            "  Do NOT simply re-run: establish why NPPES is refusing first.",
+                        ]))
+                else:
+                    consec_err = 0
                 time.sleep(a.throttle)
             df["NPI"] = df.index.map(lambda i: npi_vals.get(i,""))
             df["npi_basis"] = df.index.map(lambda i: npi_basis.get(i,"") if a.sample else npi_basis.get(i,""))
             rate = (matched/attempted*100) if attempted else 0
+            for why, n in skipped.most_common():
+                print(f"  NPI scope: skipped {n:,} - {why}")
             print(f"  NPI: pharmacy rows attempted={attempted}  confident matches={matched}  match rate={rate:.1f}%"
                   + ("  (SAMPLE)" if a.sample else ""))
         else:

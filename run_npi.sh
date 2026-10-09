@@ -18,6 +18,9 @@
 # so a re-run after a failure is safe.
 set -u
 REPO="$(cd "$(dirname "$0")" && pwd)"
+# Windows Python cannot import from a Git-Bash POSIX path (/c/...), so hand it a
+# native path. Without this the registry import fails and every lookup is skipped.
+WREPO="$(cygpath -w "$REPO" 2>/dev/null || echo "$REPO")"
 PY="$REPO/.venv/Scripts/python.exe"
 [ -x "$PY" ] || PY="$REPO/.venv/bin/python"
 
@@ -29,18 +32,27 @@ if [ -z "$DATE" ] || [ $# -eq 0 ]; then
 fi
 
 if [ "$1" = "--all" ]; then
-    STATES=$("$PY" -c "import sys; sys.path.insert(0,r'$REPO/adapters'); import email_sources as E; print(' '.join(sorted(E.ALL)))")
+    STATES=$("$PY" -c "import sys; sys.path.insert(0,r'$WREPO\adapters'); import email_sources as E; print(' '.join(sorted(E.ALL)))")
 else
     STATES="$*"
+fi
+
+# An empty state list means the registry lookup failed. Reporting "ALL DONE" after
+# doing nothing is the worst possible outcome - it looks like success.
+STATES=$(echo $STATES | tr -s ' ')
+if [ -z "${STATES// /}" ]; then
+    echo "FATAL: resolved no states to run - the registry lookup failed." >&2
+    exit 3
 fi
 
 LOG="/c/Verified/data/_npi_${DATE}.log"
 : > "$LOG"
 echo "NPI run $DATE :: $STATES :: start $(date +%H:%M:%S)" | tee -a "$LOG"
 
+RAN=0
 for ST in $STATES; do
     # Ask the registry where this state's canonical CSV actually lives.
-    F=$("$PY" - "$ST" "$DATE" "$REPO" <<'PYEOF'
+    F=$("$PY" - "$ST" "$DATE" "$WREPO" <<'PYEOF'
 import os, sys
 sys.path.insert(0, os.path.join(sys.argv[3], "adapters"))
 import email_sources as E
@@ -59,6 +71,11 @@ PYEOF
     echo "================ $ST  $(date +%H:%M:%S)" >> "$LOG"
     "$PY" "$REPO/verified_enrich.py" "$F" --jurisdiction "$ST" --npi >> "$LOG" 2>&1
     echo "   exit=$? $(date +%H:%M:%S)" >> "$LOG"
+    RAN=$((RAN+1))
 done
 
-echo "ALL DONE $(date +%H:%M:%S)" | tee -a "$LOG"
+if [ "$RAN" -eq 0 ]; then
+    echo "FATAL: every state was skipped - nothing was enriched." | tee -a "$LOG" >&2
+    exit 4
+fi
+echo "ALL DONE ($RAN state(s)) $(date +%H:%M:%S)" | tee -a "$LOG"
