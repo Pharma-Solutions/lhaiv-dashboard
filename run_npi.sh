@@ -24,6 +24,12 @@ WREPO="$(cygpath -w "$REPO" 2>/dev/null || echo "$REPO")"
 PY="$REPO/.venv/Scripts/python.exe"
 [ -x "$PY" ] || PY="$REPO/.venv/bin/python"
 
+# --include-inactive: also look up CLOSED/LAPSED/REVOKED licences. An NPI is federal
+# and outlives a state licence, so this recovers real matches (measured: 2,443 across
+# the six registered sources) at the cost of a comparable match rate.
+EXTRA=""
+if [ "${1:-}" = "--include-inactive" ]; then EXTRA="--npi-include-inactive"; shift; fi
+
 DATE="${1:-}"
 shift || true
 if [ -z "$DATE" ] || [ $# -eq 0 ]; then
@@ -47,7 +53,7 @@ fi
 
 LOG="/c/Verified/data/_npi_${DATE}.log"
 : > "$LOG"
-echo "NPI run $DATE :: $STATES :: start $(date +%H:%M:%S)" | tee -a "$LOG"
+echo "NPI run $DATE :: $STATES :: ${EXTRA:-status-gated} :: start $(date +%H:%M:%S)" | tee -a "$LOG"
 
 RAN=0
 for ST in $STATES; do
@@ -69,7 +75,7 @@ PYEOF
         continue
     fi
     echo "================ $ST  $(date +%H:%M:%S)" >> "$LOG"
-    "$PY" "$REPO/verified_enrich.py" "$F" --jurisdiction "$ST" --npi >> "$LOG" 2>&1
+    "$PY" "$REPO/verified_enrich.py" "$F" --jurisdiction "$ST" --npi $EXTRA >> "$LOG" 2>&1
     echo "   exit=$? $(date +%H:%M:%S)" >> "$LOG"
     RAN=$((RAN+1))
 done
