@@ -115,7 +115,7 @@ def verify(spec, baseline_dir):
     # ---- A. membership against the source workbooks, both directions
     src_rows, occ = {}, collections.Counter()
     for wbspec in spec.workbooks:
-        path = os.path.join(DATA, spec.state, "_incoming", wbspec.filename)
+        path = os.path.join(spec.src_dir(DATA), wbspec.filename)
         wb = openpyxl.load_workbook(path, read_only=True)
         names = wb.sheetnames
         wb.close()

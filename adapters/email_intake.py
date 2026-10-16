@@ -45,10 +45,6 @@ except Exception:
 DATA = r"C:\Verified\data"
 
 
-def incoming_dir(state):
-    return os.path.join(DATA, state, "_incoming")
-
-
 def squash(s):
     return re.sub(r"\s+", " ", str(s or "")).strip()
 
@@ -206,7 +202,7 @@ class Intake(object):
         self.log("=" * 76)
 
         for wbspec in sp.workbooks:
-            path = os.path.join(incoming_dir(sp.state), wbspec.filename)
+            path = os.path.join(sp.src_dir(DATA), wbspec.filename)
             if not os.path.exists(path):
                 raise SystemExit("[%s] FATAL: missing source workbook %s" % (sp.state, path))
             digest = sha256(path)

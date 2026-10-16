@@ -57,7 +57,7 @@ class SourceSpec(object):
                  known_status=None, documented_near_dups=None,
                  documented_state_literals=None, known_types=None,
                  allow_blank_license=False, allow_blank_name=False,
-                 output_subdir=None, acquisition=None, notes=""):
+                 output_subdir=None, source_subdir=None, acquisition=None, notes=""):
         self.state = state
         self.agency = agency
         self.scope = scope                        # "Company-Only" | "Complete"
@@ -79,6 +79,10 @@ class SourceSpec(object):
         self.allow_blank_name = allow_blank_name
         # Where the canonical CSV lands, relative to data/<ST>/. None = _incoming.
         self.output_subdir = output_subdir
+        # Where the source workbooks are read from, relative to data/<ST>/. None =
+        # _incoming. Needed when the workbook is a documented conversion of a non-xlsx
+        # delivery (HI's PDFs) that lives beside its own output, not in _incoming.
+        self.source_subdir = source_subdir
         assert workbooks and aliases, "%s: workbooks and aliases are required" % state
         self.workbooks = workbooks
         self.aliases = aliases                    # {canonical: [accepted header, ...]}
@@ -117,6 +121,10 @@ class SourceSpec(object):
     def out_dir(self, data_root):
         import os
         return os.path.join(data_root, self.state, self.output_subdir or "_incoming")
+
+    def src_dir(self, data_root):
+        import os
+        return os.path.join(data_root, self.state, self.source_subdir or "_incoming")
 
 
 # --------------------------------------------------------------------------- WY
@@ -405,4 +413,60 @@ SC = SourceSpec(
 )
 
 
-ALL = {s.state: s for s in (WY, GA, MD, SD, OR, SC)}
+# --------------------------------------------------------------------------- HI
+# Hawaii DLE Narcotics Enforcement Division: CDS establishment registrants, released
+# under a UIPA public-records request as THREE TEXT PDFs, not workbooks. They are
+# converted by hi_ned_pdf_to_xlsx.py (word x-coordinates against each page's own
+# header positions) into one workbook, one sheet per list, which lives beside the
+# output rather than in _incoming. The PDFs themselves are kept byte-exact in
+# acquisition/HI/ with the Notice to Requester (the grant, no fee).
+#
+# Corrects the 2026-10-14 build (pdftotext -layout): that file had address_city blank
+# on every row, truncated street numbers and header text bleeding into data.
+HI = SourceSpec(
+    state="HI", agency="hi-ned-cds-establishments", scope="Company-Only",
+    output_subdir="hi-ned-cds-establishments", source_subdir="hi-ned-cds-establishments",
+    email={
+        "authority": "Hawaii DLE Narcotics Enforcement Division (NED)",
+        "sender": "LAW.UIPARequest@hawaii.gov", "sender_name": "LAW UIPARequest",
+        "subject": ("RE: Public records / data request — Hawaii NED "
+                    "controlled-substance registrant roster"),
+        "received": "2026-10-09",
+    },
+    workbooks=[
+        Workbook("HI_NED_CDS_establishment_lists_20261009.xlsx",
+                 sheets={"Manufacturer": "Manufacturer", "Distributor": "Distributor",
+                         "Pharmacy": "Pharmacy"},
+                 expected_rows={"Manufacturer": 18, "Distributor": 229, "Pharmacy": 645}),
+    ],
+    aliases={
+        "license_number": ["ned number"], "license_status": ["status"],
+        # Full Name, not Organization Name: Full Name is populated on all 892 rows and
+        # equals Organization Name on the 888 where that is filled. The 4 with no
+        # Organization Name are registered as INDIVIDUALS in the source (Last/First):
+        # three Henry Schein sites ("SCHEIN, INC. DENVER, HENRY") and E08242
+        # "Hauser, Janet". Kept verbatim; not rewritten into a company name.
+        "facility_name": ["full name"],
+        "expiration_date": ["expiration date"],
+        "address_line1": ["business address street"],
+        "address_city": ["business address city"],
+        "address_state": ["business address state"],
+        "address_zip": ["business address zip"],
+    },
+    known_status={"Active"},
+    notes=("No licence-type column: license_type is the list the registrant is on. "
+           "Expiration Date is DD-MM-YYYY text in the PDF; the converter writes it as a "
+           "real date only after proving the order (values with first field > 12 exist, "
+           "none with second field > 12). 35 ZIPs arrive as 4 digits, all in NJ/MA/CT/"
+           "NH/ME - leading zero lost upstream - and are zero-padded and counted. "
+           "E17431 (PHARMA SOURCE DIRECT, LLC) is listed twice on the Distributor list, "
+           "byte-identical, and is removed by the whole-row de-dupe. E08242 'Hauser, "
+           "Janet' is an individual on the Distributor list - pending Mark's adjudication. "
+           "Email read from the verified@ mailbox; To: mark.fulton@lighthouseai.com, "
+           "received 2026-10-09T18:52:57Z, Internet-Message-Id "
+           "<SA0PR09MB6681C1E027E8BC8A8337B3FED1922@SA0PR09MB6681.namprd09.prod.outlook.com>. "
+           "PDF sha256 values are in HI_NED_pdf_conversion_report.json beside the output."),
+)
+
+
+ALL = {s.state: s for s in (WY, GA, MD, SD, OR, SC, HI)}

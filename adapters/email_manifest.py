@@ -22,6 +22,8 @@ import json
 import os
 import sys
 
+import email_sources as ES
+
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 except Exception:
@@ -76,9 +78,13 @@ def main():
 
         files = []
         for f in prov["source_files"]:
-            # Source workbooks always live in data/<ST>/_incoming, even when the
-            # canonical output lands in an agency folder beside it (SC).
-            fp = os.path.join(DATA, prov["state"], "_incoming", f["file"])
+            # Source workbooks live where the registry says: data/<ST>/_incoming unless
+            # the spec sets source_subdir (HI, whose workbook is a PDF conversion kept
+            # beside its output). The output folder alone is not enough - SC writes to
+            # an agency folder but reads from _incoming.
+            sp = ES.ALL.get(prov["state"])
+            src = sp.src_dir(DATA) if sp is not None else os.path.join(DATA, prov["state"], "_incoming")
+            fp = os.path.join(src, f["file"])
             if not os.path.exists(fp):
                 print("   !! MISSING source workbook: %s" % f["file"])
                 drift += 1
