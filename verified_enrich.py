@@ -4,7 +4,8 @@ verified_enrich.py  —  LHAI Verified data-enrichment for Master Data files.
 
 Adds two columns to a state license roster:
   1. resident_nonresident  (+ resnon_basis)  — 100% offline, no dependencies beyond pandas
-  2. NPI                    (+ npi_basis)     — via NPPES; pharmacies only, blank where no confident match
+  2. NPI                    (+ npi_basis)     — via NPPES; pharmacies only, blank where no confident match;
+                                                 several NPIs at one site are all kept, ';'-separated
 
 Pilot-proven on the Kentucky pharmacy + wholesaler lists (2026-09-21).
 
@@ -384,22 +385,96 @@ def _is_pharmacy(res):
             return True
     return False
 
-def _match(results, city, zipc):
-    """Confident match: a pharmacy-taxonomy org whose LOCATION address agrees on ZIP5 (preferred)
-    or normalized city. Returns (npi, basis) or ('', '')."""
+STREET_SUFFIX = re.compile(r"^(ST|STREET|RD|ROAD|AVE|AVENUE|BLVD|BOULEVARD|DR|DRIVE|HWY|HIGHWAY|LN|LANE|"
+                           r"WAY|PKWY|PARKWAY|CT|COURT|PL|PLACE|CIR|CIRCLE|TER|TERRACE|PIKE|SUITE|STE|UNIT)$")
+DIRECTIONAL = {"N","S","E","W","NE","NW","SE","SW","NORTH","SOUTH","EAST","WEST"}
+
+def street_key(addr):
+    """(house_number, first_street_word) from a street line, e.g. '91-2301 OLD FORT WEAVER RD'
+    -> ('912301', 'OLD'). Hawaiian hyphenated numbers are kept whole. ('', '') when the line
+    does not start with a number - 'ONE COMMERCE DRIVE' has no comparable house number."""
+    toks = re.sub(r"[^A-Za-z0-9\- ]", " ", str(addr or "")).upper().split()
+    if not toks or not re.match(r"^\d", toks[0]):
+        return "", ""
+    num = toks[0].replace("-", "")
+    word = ""
+    for t in toks[1:]:
+        if t in DIRECTIONAL or STREET_SUFFIX.match(t):
+            continue
+        word = t
+        break
+    return num, word
+
+NPI_SEP = ";"   # a licence whose site holds several pharmacy NPIs carries all of them, sorted
+
+def _primary_taxonomy(res):
+    taxos = res.get("taxonomies", [])
+    for t in taxos:
+        if t.get("primary"):
+            return str(t.get("code", ""))
+    return str(taxos[0].get("code", "")) if taxos else ""
+
+def _site(npis, prim, how):
+    """Every NPI at the matched site, sorted, with each one's primary taxonomy in the basis."""
+    npis = sorted(npis)
+    detail = ", ".join("%s=%s" % (n, prim[n]) for n in npis)
+    if len(npis) == 1:
+        return npis[0], "%s [%s]" % (how, detail)
+    return NPI_SEP.join(npis), "%s; %d NPIs at this site [%s]" % (how, len(npis), detail)
+
+def _match(results, city, zipc, street=""):
+    """Confident match: the pharmacy-taxonomy org(s) whose LOCATION address agrees with the licence.
+    Returns (npi, basis) or ('', reason). npi may hold several NPIs joined by NPI_SEP.
+
+    Area first (ZIP5, else normalized city), then the STREET decides. The old rule returned the
+    first pharmacy in the ZIP, so every store of a chain in one ZIP received the same NPI (HI
+    2026-10-16: 36 NPIs on 81 licences, 34 of the 36 groups at different streets).
+
+    One site often holds several pharmacy NPIs - retail, mail-order, specialty, compounding at
+    one address (HI: Birdi 43811 Plymouth Oaks Blvd has 4). There is no single right answer, so
+    ALL of them are kept rather than one picked (Mark, 2026-10-16: "No arbitrary pick").
+      * house number agrees                     -> every NPI at that number; if they sit on
+                                                   different streets, the street word must pick
+                                                   the street, else none
+      * house number present, no NPI agrees     -> none (the area match is not this site)
+      * no house number (blank, 'ONE COMMERCE') -> only a sole candidate NPI in the area"""
     z5 = str(zipc)[:5]; cn = city_norm(city)
+    num, word = street_key(street)
     for keyed_on in ("zip", "city"):
+        cands, prim = {}, {}                       # npi -> [street_key of each LOCATION address]
         for res in results:
             if not _is_pharmacy(res): continue
             for a in res.get("addresses", []):
                 if a.get("address_purpose") != "LOCATION": continue
-                if keyed_on == "zip" and z5 and str(a.get("postal_code",""))[:5] == z5:
-                    return str(res.get("number","")), "zip5 + pharmacy taxonomy"
-                if keyed_on == "city" and cn and city_norm(a.get("city","")) == cn:
-                    return str(res.get("number","")), "city + pharmacy taxonomy"
+                if keyed_on == "zip":
+                    hit = z5 and str(a.get("postal_code",""))[:5] == z5
+                else:
+                    hit = cn and city_norm(a.get("city","")) == cn
+                if hit:
+                    n = str(res.get("number",""))
+                    cands.setdefault(n, []).append(street_key(a.get("address_1","")))
+                    prim[n] = _primary_taxonomy(res)
+        if not cands:
+            continue
+        area = "zip5" if keyed_on == "zip" else "city"
+        if num:
+            at_num = {n: [k for k in keys if k[0] == num] for n, keys in cands.items()}
+            at_num = {n: keys for n, keys in at_num.items() if keys}
+            if not at_num:
+                return "", "no NPI at this street (%d in %s)" % (len(cands), area)
+            words = {k[1] for keys in at_num.values() for k in keys}
+            if len(words) <= 1:
+                return _site(at_num, prim, "street# + %s + pharmacy taxonomy" % area)
+            on_word = [n for n, keys in at_num.items() if any(k[1] == word for k in keys)]
+            if word and on_word:
+                return _site(on_word, prim, "street + %s + pharmacy taxonomy" % area)
+            return "", "ambiguous: street# %s on %d different streets" % (num, len(words))
+        if len(cands) == 1:
+            return _site(cands, prim, "%s + pharmacy taxonomy (sole candidate, no street number)" % area)
+        return "", "ambiguous: %d NPIs in %s, no street number to decide" % (len(cands), area)
     return "", ""
 
-def nppes_lookup(session, name, city, state, zipc):
+def nppes_lookup(session, name, city, state, zipc, street=""):
     """Return (npi, basis) with a confident match, else ('', reason). Never guesses.
     Two passes: exact-ish normalized name, then a broadened name (helps chains where the store
     number/suffix differs), both keyed on ZIP5 then normalized city, limit 200."""
@@ -423,16 +498,18 @@ def nppes_lookup(session, name, city, state, zipc):
     res = query(nm + "*")
     if res is None:
         return "", "lookup error (%s)" % (getattr(query, "last_error", "") or "unknown")
-    npi, why = _match(res, city, zipc)
+    npi, why = _match(res, city, zipc, street)
     if npi: return npi, why
+    first_why = why
     toks = nm.split()
     broad = " ".join(toks[:2]) if len(toks) >= 2 else (toks[0] if toks else "")
     if broad and broad != nm:
         res2 = query(broad + "*")
         if res2:
-            npi, why = _match(res2, city, zipc)
+            npi, why = _match(res2, city, zipc, street)
             if npi: return npi, why + " (broadened name)"
-    return "", "no confident NPPES match"
+            first_why = first_why or why
+    return "", "no confident NPPES match" + (" - %s" % first_why if first_why else "")
 
 # ---- main ------------------------------------------------------------------
 def main():
@@ -506,7 +583,8 @@ def main():
                 qstate = normalize_state(row.get(state_col,"")) if state_col else ""
                 if not qstate and addr_col: qstate = state_from_addr(row.get(addr_col,""))
                 npi, why = nppes_lookup(session, row.get(name_col,""), row.get(city_col,""),
-                                        qstate, row.get(zip_col,""))
+                                        qstate, row.get(zip_col,""),
+                                        row.get(addr_col,"") if addr_col else "")
                 npi_vals[idx]=npi; npi_basis[idx]=why
                 if npi: matched += 1
                 if why.startswith("lookup error"):
